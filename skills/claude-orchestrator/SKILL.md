@@ -21,8 +21,8 @@ by reflex.** Its tokens buy judgment, not throughput.
 2. **Hands-on while limits are healthy.** Prefer the main loop doing small and
    medium work itself over reflexive delegation — delegation has its own
    overhead (brief + review). Delegate work that is parallelizable, large and
-   mechanical, or would flood the main context. Check usage (`/usage`, or the
-   `claude-limit` skill when installed) before a large delegation.
+   mechanical, or would flood the main context. Check usage with the
+   `claude-limit` skill before a large delegation.
 3. **No mid-tiers.** Two models: Opus 5.5 and Sonnet 5.5. More tiers make
    routing decisions unauditable.
 4. **The main loop keeps the big picture.** Architecture, specs,

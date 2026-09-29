@@ -1,23 +1,35 @@
 # Claude Orchestrator
 
-A delegation policy skill for Claude Code on a single $20 Claude Pro plan:
-**Opus 5.5** runs the main loop and keeps judgment, specs and review;
+[![Tests](https://github.com/zelyvox/claude-orchestrator/actions/workflows/tests.yml/badge.svg)](https://github.com/zelyvox/claude-orchestrator/actions/workflows/tests.yml)
+
+Skills for running Claude Code on a single $20 Claude Pro plan with two models:
+**Opus 5.5** in the main loop keeps judgment, specs and review;
 **Sonnet 5.5** sub-agents gather context and carry simple execution.
 
-It is a policy, not an engine: one Markdown file, no scripts.
-See [SKILL.md](skills/claude-orchestrator/SKILL.md).
+| Skill | What it does |
+|---|---|
+| [claude-orchestrator](skills/claude-orchestrator/SKILL.md) | Delegation policy: who gets which work. One Markdown file. Loads whenever sub-agents are spawned. |
+| [claude-limit](skills/claude-limit/SKILL.md) | Colored screen of the 5-hour and 7-day usage windows, plus what to do at each level. |
 
 ## Install
 
 ```bash
-cp -r skills/claude-orchestrator ~/.claude/skills/
+cp -r skills/claude-orchestrator skills/claude-limit ~/.claude/skills/
 ```
 
 ```powershell
-Copy-Item -Recurse -Force skills/claude-orchestrator ~/.claude/skills/
+Copy-Item -Recurse -Force skills/claude-orchestrator, skills/claude-limit ~/.claude/skills/
 ```
 
-The skill loads automatically whenever Claude Code plans a delegation or spawns sub-agents.
+`claude-limit` needs Python 3.11+ (standard library only).
+
+## Tests
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+Offline: no real token, no real endpoint.
 
 ## License
 
