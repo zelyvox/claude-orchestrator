@@ -111,6 +111,66 @@ class LiveTests(Base):
         self.assertEqual(names, ["5-hour", "7-day", "seven day opus"])
 
 
+def scoped_payload(fable=12, cap=50):
+    payload = live_payload()
+    payload["limits"] = [
+        {"kind": "session", "percent": 42, "resets_at": iso(NOW + 4320), "scope": None},
+        {"kind": "weekly_all", "percent": 81, "resets_at": iso(NOW + 86400), "scope": None},
+        {"kind": "weekly_scoped", "percent": fable, "resets_at": iso(NOW + 3 * 86400),
+         "scope": {"model": {"id": None, "display_name": "Fable"}, "surface": None}},
+    ]
+    payload["weekly_scoped_shares"] = [{"limit_index": 2, "used_percent_of_weekly": 6,
+                                        "allowance_percent_of_weekly": cap}]
+    return payload
+
+
+class ScopedTests(Base):
+    def test_model_scoped_window_is_shown(self):
+        self.write(".credentials.json", creds())
+        windows = self.collect(FakeOpener(scoped_payload()))["windows"]
+        self.assertEqual([w["name"] for w in windows], ["5-hour", "7-day", "Fable 7-day"])
+        fable = windows[2]
+        self.assertEqual((fable["used_percent"], fable["scope"], fable["resets_in"]), (12.0, "Fable", "3d"))
+        self.assertEqual(fable["cap_percent_of_weekly"], 50.0)
+
+    def test_scoped_render_shows_cap(self):
+        self.write(".credentials.json", creds())
+        _, text = self.run_main(FakeOpener(scoped_payload()), "--color", "never")
+        self.assertIn("Fable 7-day   12%", text)
+        self.assertIn("may use up to 50% of 7-day", text)
+
+    def test_scoped_without_share_has_no_cap(self):
+        self.write(".credentials.json", creds())
+        payload = scoped_payload()
+        del payload["weekly_scoped_shares"]
+        fable = self.collect(FakeOpener(payload))["windows"][2]
+        self.assertNotIn("cap_percent_of_weekly", fable)
+
+    def test_malformed_scoped_entries_are_safe(self):
+        self.write(".credentials.json", creds())
+        payload = live_payload()
+        payload["limits"] = [None, "x", {"kind": "weekly_scoped", "percent": "bad", "scope": "nope"},
+                             {"kind": "weekly_scoped", "percent": 5,
+                              "scope": {"model": {"display_name": "Fa\x1b[31mble"}}}]
+        payload["limits"].append({"kind": "weekly_scoped", "percent": 1,
+                                  "scope": {"model": {"display_name": "\x1b\x07"}}})
+        payload["weekly_scoped_shares"] = [{"limit_index": True, "allowance_percent_of_weekly": 50}]
+        payload["evil\x1b]0;x\x07"] = {"utilization": 1.0}
+        windows = self.collect(FakeOpener(payload))["windows"]
+        self.assertEqual([w["name"] for w in windows[2:]],
+                         ["evil]0;x", "scoped 7-day", "Fa[31mble 7-day", "scoped 7-day"])
+        self.assertTrue(all("cap_percent_of_weekly" not in w for w in windows))
+        self.assertIsNone(windows[3]["used_percent"])
+        self.assertNotIn("\x1b", cl.render({"plan": None, "source": "live", "age_minutes": 0,
+                                            "windows": windows, "warnings": []}))
+
+    def test_scoped_alone_is_not_a_reading(self):
+        self.write(".credentials.json", creds())
+        payload = scoped_payload()
+        del payload["five_hour"], payload["seven_day"]
+        self.assertEqual(self.collect(FakeOpener(payload))["windows"], [])
+
+
 class CredentialTests(Base):
     def test_missing_credentials_falls_back(self):
         self.write("ravenline-limits.json", ravenline())

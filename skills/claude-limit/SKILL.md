@@ -1,6 +1,6 @@
 ---
 name: claude-limit
-description: Show the Claude subscription usage windows (5-hour, 7-day, plus any extra window the plan has) on one colored screen, live where possible. Use when the user asks "limit", "quota", "how much usage is left", or before a large delegation under claude-orchestrator.
+description: Show the Claude subscription usage windows (5-hour, 7-day, model-scoped weekly windows such as Fable on Max, plus any extra window the plan has) on one colored screen, live where possible. Use when the user asks "limit", "quota", "how much usage is left", or before a large delegation under an orchestrator skill.
 ---
 
 # Claude Limit
@@ -20,7 +20,7 @@ percentage as current, and don't treat a missing reading as room to spend.
 
 ## Acting on it
 
-Opus 5.5 and Sonnet 5.5 share one pool with two walls. Each window has its own wall, and
+Opus 5.5 and Sonnet 5.5 share one pool with two walls (model-scoped windows: see below). Each window has its own wall, and
 the reset time matters as much as the percentage:
 
 | Reading | Do |
@@ -36,6 +36,15 @@ The fullest *valid* window is binding — a 12% 5-hour window next to an exhaust
 window means the pool is exhausted. Keep a few percent in reserve for whatever must run at
 the end of a session (review, handoff notes): a job that dies mid-flight costs more than one
 that never started.
+
+### Model-scoped windows
+
+Some plans add a weekly window for one model, e.g. `Fable 7-day` on Max. It binds **only that
+model**: at its wall, stop routing work to that model and carry on with the others. Usage of
+that model still counts toward the all-model 7-day window too. When the source reports it,
+the line shows how much of the 7-day pool the model may use at most
+(`may use up to 50% of 7-day`). A plan without such a window simply has no line for it —
+that is not an unknown reading.
 
 ## Sources, in order
 
@@ -55,6 +64,8 @@ that never started.
 - The live endpoint is undocumented. If Anthropic changes it, the script falls back or reports
   unknown; the offline tests cannot detect such a change.
 - These are percentages of rolling subscription windows, not token counts.
+- Model-scoped windows come only from the live endpoint; the ravenline snapshot carries the
+  5-hour and 7-day windows only.
 
 Decision table adapted from the `limit` skill in
 [avenoxai/avenoxskills](https://github.com/avenoxai/avenoxskills) (MIT).

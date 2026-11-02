@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Show Claude subscription usage windows (5-hour, 7-day) for the claude-limit skill.
+"""Show Claude subscription usage windows (5-hour, 7-day, model-scoped weekly) for the claude-limit skill.
 
 Sources, in order:
   1. Live usage endpoint, authenticated with the OAuth token in ~/.claude/.credentials.json.
@@ -149,8 +149,61 @@ def read_ravenline(home, now):
     return mapping, age, None
 
 
+def printable(text):
+    """Drop control characters, so endpoint strings cannot drive the terminal."""
+    return "".join(ch for ch in text if ch.isprintable())
+
+
+def make_window(label, used, resets_at, now, warnings):
+    used = percent(used)
+    resets = reset_ts(resets_at)
+    expired = resets is not None and resets < now
+    if used is None:
+        warnings.append(f"{label}: unreadable percentage")
+    if expired:
+        warnings.append(f"{label} window expired {fmt_delta(now - resets)} ago -- number is not current")
+    return {
+        "name": label,
+        "used_percent": used,
+        "resets_in": fmt_delta(resets - now) if resets and not expired else None,
+        "expired": expired,
+    }
+
+
+def scoped_windows(mapping, now, warnings):
+    """Weekly windows scoped to one model (e.g. Fable on Max), from the `limits` list.
+
+    Such a window binds only that model; the all-model 7-day window still binds everything.
+    `cap_percent_of_weekly` is how much of the 7-day pool the model may use, when reported.
+    """
+    limits = mapping.get("limits")
+    if not isinstance(limits, list):
+        return []
+    caps = {}
+    shares = mapping.get("weekly_scoped_shares")
+    for share in shares if isinstance(shares, list) else []:
+        index = share.get("limit_index") if isinstance(share, dict) else None
+        if isinstance(index, int) and not isinstance(index, bool):
+            caps[index] = percent(share.get("allowance_percent_of_weekly"))
+    windows = []
+    for index, item in enumerate(limits):
+        if not isinstance(item, dict) or item.get("kind") != "weekly_scoped":
+            continue
+        scope = item.get("scope") if isinstance(item.get("scope"), dict) else {}
+        model = scope.get("model") if isinstance(scope.get("model"), dict) else {}
+        name = model.get("display_name") or model.get("id") or scope.get("surface")
+        name = printable(name)[:24].strip() if isinstance(name, str) else ""
+        name = name or "scoped"
+        window = make_window(f"{name} 7-day", item.get("percent"), item.get("resets_at"), now, warnings)
+        window["scope"] = name
+        if caps.get(index) is not None:
+            window["cap_percent_of_weekly"] = caps[index]
+        windows.append(window)
+    return windows
+
+
 def build_windows(mapping, now, warnings):
-    """Known windows first, then any extra window the source returns."""
+    """Known windows first, then any extra window the source returns, then model-scoped ones."""
     keys = [k for k, _ in KNOWN if k in mapping]
     keys += [k for k in mapping if k not in dict(KNOWN)]
     windows = []
@@ -158,20 +211,10 @@ def build_windows(mapping, now, warnings):
         window = mapping[key]
         if not isinstance(window, dict) or window.get("utilization") is None:
             continue
-        label = dict(KNOWN).get(key, key.replace("_", " "))
-        used = percent(window["utilization"])
-        resets = reset_ts(window.get("resets_at"))
-        expired = resets is not None and resets < now
-        if used is None:
-            warnings.append(f"{label}: unreadable percentage")
-        if expired:
-            warnings.append(f"{label} window expired {fmt_delta(now - resets)} ago -- number is not current")
-        windows.append({
-            "name": label,
-            "used_percent": used,
-            "resets_in": fmt_delta(resets - now) if resets and not expired else None,
-            "expired": expired,
-        })
+        label = dict(KNOWN).get(key) or printable(key.replace("_", " "))[:40]
+        windows.append(make_window(label, window["utilization"], window.get("resets_at"), now, warnings))
+    if windows:
+        windows += scoped_windows(mapping, now, warnings)
     return windows
 
 
@@ -239,6 +282,8 @@ def render(result, color=False):
             tail = paint(f"resets in: {window['resets_in']}", DIM)
         else:
             tail = ""
+        if window.get("cap_percent_of_weekly") is not None:
+            tail += paint(f"  (may use up to {window['cap_percent_of_weekly']:.0f}% of 7-day)", DIM)
         lines.append(f"  {window['name']:<{width}}  {value}  {tail}".rstrip())
     for warning in result["warnings"]:
         lines.append(paint(f"  ! {warning}", YELLOW))

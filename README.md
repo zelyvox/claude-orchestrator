@@ -9,7 +9,7 @@ Skills for running Claude Code on a single $20 Claude Pro plan with two models:
 | Skill | What it does |
 |---|---|
 | [claude-orchestrator](skills/claude-orchestrator/SKILL.md) | Delegation policy: who gets which work. One Markdown file. Loads whenever sub-agents are spawned. |
-| [claude-limit](skills/claude-limit/SKILL.md) | Colored screen of the 5-hour and 7-day usage windows, plus what to do at each level. |
+| [claude-limit](skills/claude-limit/SKILL.md) | Colored screen of the 5-hour and 7-day usage windows, plus model-scoped weekly windows such as Fable on Max, and what to do at each level. |
 
 ## Install
 
