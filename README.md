@@ -2,28 +2,45 @@
 
 [![Tests](https://github.com/zelyvox/claude-orchestrator/actions/workflows/tests.yml/badge.svg)](https://github.com/zelyvox/claude-orchestrator/actions/workflows/tests.yml)
 
-Skills for running Claude Code on a single $20 Claude Pro plan with two models:
-**Opus 5.5** in the main loop keeps judgment, specs and review;
-**Sonnet 5.5** sub-agents gather context and carry simple execution.
+Skills for running Claude Code on a single Claude subscription without wasting
+it. **Opus 5.5** in the main loop keeps judgment, specs and review;
+**Sonnet 5.5** sub-agents gather context and carry simple execution. On a Max
+plan, **Fable 5.1** joins as a rare, read-only consultant for the hardest calls.
 
-| Skill | What it does |
-|---|---|
-| [claude-orchestrator](skills/claude-orchestrator/SKILL.md) | Delegation policy: who gets which work. One Markdown file. Loads whenever sub-agents are spawned. |
-| [claude-limit](skills/claude-limit/SKILL.md) | Colored screen of the 5-hour and 7-day usage windows, plus model-scoped weekly windows such as Fable on Max, and what to do at each level. |
+| Skill | Plan | What it does |
+|---|---|---|
+| [claude-orchestrator](skills/claude-orchestrator/SKILL.md) | Pro ($20) | Delegation policy for Opus + Sonnet: who gets which work. |
+| [claude-orchestrator-max](skills/claude-orchestrator-max/SKILL.md) | Max ($100) | Same idea with more room for Opus sub-agents, and Fable as a consultant: when to ask it, how to brief it, and its budget. |
+| [claude-limit](skills/claude-limit/SKILL.md) | any | Colored screen of the 5-hour and 7-day usage windows, plus model-scoped weekly windows such as Fable on Max, and what to do at each level. |
+
+Each policy is one Markdown file and loads only when sub-agents are spawned;
+the rest of the time only its one-line description is in context.
 
 ## Install
+
+Install the policy for your plan, plus `claude-limit`.
+
+Pro:
 
 ```bash
 cp -r skills/claude-orchestrator skills/claude-limit ~/.claude/skills/
 ```
 
-```powershell
-Copy-Item -Recurse -Force skills/claude-orchestrator, skills/claude-limit ~/.claude/skills/
+Max:
+
+```bash
+cp -r skills/claude-orchestrator-max skills/claude-limit ~/.claude/skills/
 ```
+
+PowerShell: `Copy-Item -Recurse -Force skills/<policy>, skills/claude-limit ~/.claude/skills/`
+
+If you switch between a Pro and a Max account, install both policies. Each
+description names its plan, and the Max policy checks the plan through
+`claude-limit` and hands over to the Pro one when it is not on Max.
 
 `claude-limit` needs Python 3.11+ (standard library only).
 
-## Does it work? What we measured
+## Does it work? What we measured (Pro policy)
 
 Short answer: **when Claude Code delegates work to sub-agents, this skill
 roughly halved the cost of the same job, with the same quality.** It does not
