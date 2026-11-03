@@ -1,22 +1,45 @@
 ---
 name: claude-orchestrator-max
-description: "Delegation policy for a Claude Max plan only (not Pro): Opus 5.5 in the main loop plans and reviews, Sonnet 5.5 sub-agents do the bounded work, and Fable 5.1 is a rare read-only consultant for architecture decisions and problems Opus cannot crack. Load whenever spawning sub-agents (Agent tool or Workflow agent() calls) or planning delegation. If the plan is unknown, load this one rather than claude-orchestrator: its first step checks the plan and hands off to claude-orchestrator when not on Max."
+description: "Delegation policy for a Claude Max plan only (not Pro): Fable 5.1 is the scarce judgment tier (the operator's design partner in the main loop, or a read-only consultant Opus calls as a sub-agent), Opus 5.5 plans, builds and reviews, Sonnet 5.5 sub-agents do the bounded work. Load whenever spawning sub-agents (Agent tool or Workflow agent() calls), planning delegation, or switching the main-loop model. If the plan is unknown, load this one rather than claude-orchestrator: its first step checks the plan and hands off to claude-orchestrator when not on Max."
 ---
 
-# Orchestration & delegation policy (Max plan, Fable as consultant)
+# Orchestration & delegation policy (Max plan, Fable for judgment)
 
-A routing policy for one Claude **Max** plan: **Opus 5.5 in the main loop**,
-**Sonnet 5.5 as the default delegate**, and **Fable 5.1 as a consultant** that
-answers hard questions but does not do the work.
+A routing policy for one Claude **Max** plan with three roles: **Fable 5.1**
+for judgment, as the operator's design partner in the main loop or as a
+read-only consultant Opus calls; **Opus 5.5** to plan, build and review;
+**Sonnet 5.5** as the default delegate for bounded work.
 
-Core law: **Opus thinks and decides, Sonnet executes, Fable advises.** Fable's
-tokens buy a second, stronger opinion at the few points where a wrong call is
-expensive, never throughput.
+Core law: **judgment on Fable, building on Opus, bounded work on Sonnet.**
+Fable's tokens buy decisions at the points where a wrong call is expensive,
+never throughput.
+
+## Two modes
+
+The operator picks the main-loop model with `/model`; the session keeps its
+context across the switch.
+
+**Design mode (main loop: Fable).** The operator and Fable work out the
+architecture together: options, risks, the decision. Fable then writes the
+plan to a file: the task list, a model stamped on every task, acceptance
+criteria. Fable reads little in this mode; when the terrain is unknown, a
+Sonnet sweep maps it and Fable reads the map. No build work here beyond
+trivial edits. "When to consult Fable" does not apply: the consultant is
+already in the loop. Every turn draws on the Fable 7-day window, so when the
+file-heavy part starts, Fable says so and the operator switches to Opus.
+
+**Build mode (main loop: Opus).** Opus takes the plan, delegates to Sonnet,
+carries the hard lanes itself or with an Opus sub-agent, and reviews. A
+design question the plan did not foresee goes to Fable through the
+consultation triggers below, or the operator switches back to Fable for a
+conversation. Both draw on the same window.
+
+The rules below apply in both modes.
 
 ## Check the plan first
 
-Run the `claude-limit` skill once at the start of a delegated job. Its header
-shows the plan.
+Run the `claude-limit` skill once per session, before the first delegation.
+Its header shows the plan.
 
 - `plan: max` → this policy applies.
 - Anything else (e.g. after switching to a Pro account) → stop using this
@@ -33,10 +56,10 @@ shows the plan.
 ## The hard rules
 
 1. **Always set `model` explicitly** (`"sonnet"`, `"opus"` or `"fable"`) on
-   every Agent call, every Workflow `agent()` call, and every `meta.phases`
-   entry whose phase runs on that model. An omitted model inherits the main
-   loop and silently fans out Opus. The Workflow reference says to omit it by
-   default; under this policy, don't.
+   every Agent call and every Workflow `agent()` call; `meta.phases` entries
+   carry the same model for display. An omitted model inherits the main loop
+   and silently fans out Opus, or Fable in design mode. The Workflow
+   reference says to omit it by default; under this policy, don't.
 2. **Hands-on while limits are healthy.** The main loop does small and medium
    work itself. Delegate work that is parallelizable, large and mechanical, or
    would flood the main context.
@@ -59,22 +82,39 @@ shows the plan.
   review of risky work.
 - **Main loop**: everything in rule 5, plus hard execution that needs the
   whole picture.
-- **Fable**: only the consultation triggers below.
+- **Fable**: design mode, or the consultation triggers below.
+- **Haiku**: not used. Three tiers keep routing auditable; a Sonnet lane at
+  low effort covers the mechanical end.
 
 ## The brief is the ceiling
 
-A delegated lane is never better than its brief. Spend main-loop tokens on
-the brief, not on doing the lane yourself. Every brief states:
+A delegated lane is never better than its brief. Once the decision to
+delegate is made, spend main-loop tokens on the brief, not on doing the lane
+yourself. Every brief states:
 
 - the goal and what "done" looks like,
 - the files or places to start from,
 - the constraints that must hold and what is out of scope,
 - what to return, in what shape.
 
-When a lane comes back wrong, fix the brief first. Move to a stronger model
-only if a clear brief still fails.
+When a lane comes back wrong: fix the brief, then raise the effort, then
+raise the model, in that order.
+
+## Effort
+
+The Agent tool and Workflow `agent()` set reasoning effort only when a skill
+or the operator asks for it; this policy is that instruction.
+
+- Sonnet mechanical lanes (inventory, sweeps, templated changes): `low`;
+  `medium` when the lane has to make small judgment calls.
+- Opus hard lanes and fresh-eyes reviews: `high`.
+- Fable consultations: omit, inherit the session default.
 
 ## When to consult Fable
+
+Build mode only; in design mode Fable is already in the loop. The operator
+may also switch the main loop to Fable with `/model` instead of a sub-agent
+consultation; the budget gate applies either way.
 
 Only these three:
 
@@ -127,6 +167,9 @@ to the operator.
   is unknown. The main loop decides, or asks the operator.
 - `Fable 7-day` comes only from the live endpoint. If it is unknown, tell the
   operator that Fable is unavailable and why; don't skip it silently.
+- Design mode draws on the same window with every turn. At 90% of
+  `Fable 7-day`, Fable stops and tells the operator; it does not switch
+  silently.
 - The 5-hour and 7-day rules in `claude-limit` apply to every model.
 - Expect a few consultations a week. A second consultation in one session
   needs a one-line reason in the plan; before a third, ask the operator.
