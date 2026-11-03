@@ -110,7 +110,7 @@ alone, which is also what the skill recommends.
 ## Tests
 
 ```bash
-python -m unittest discover -s tests -v
+python3 -m unittest discover -s tests -v   # Windows: py -3 -m unittest discover -s tests -v
 ```
 
 Offline: no real token, no real endpoint.
