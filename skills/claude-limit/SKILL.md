@@ -5,12 +5,21 @@ description: Show the Claude subscription usage windows (5-hour, 7-day, model-sc
 
 # Claude Limit
 
-Run the script that ships next to this file (`python` instead of `python3` on Windows;
-adjust the path if the skill is installed elsewhere):
+Run the script that ships next to this file (adjust the path if the skill is installed
+elsewhere):
 
 ```bash
 python3 ~/.claude/skills/claude-limit/scripts/claude_limit.py --color always
 ```
+
+On Windows use the Python launcher, not `python`:
+
+```bash
+py -3 ~/.claude/skills/claude-limit/scripts/claude_limit.py --color always
+```
+
+A bare `python` on Windows often resolves to the Microsoft Store app-execution alias,
+which prints "Python was not found" and exits with code 49 even when Python is installed.
 
 Show the output verbatim before summarising it — do not paraphrase or round the numbers.
 In your reply, copy the lines without the color escape codes.
