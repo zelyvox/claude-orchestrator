@@ -1,6 +1,6 @@
 ---
 name: claude-orchestrator-max
-description: "Delegation policy for a Claude Max plan only (not Pro): Opus 5.5 in the main loop plans and reviews, Sonnet 5.5 sub-agents do the bounded work, and Fable 5.1 is a rare read-only consultant for architecture decisions and problems Opus cannot crack. Load whenever spawning sub-agents (Agent tool) or planning delegation. If the plan is unknown, load this one rather than claude-orchestrator: its first step checks the plan and hands off to claude-orchestrator when not on Max."
+description: "Delegation policy for a Claude Max plan only (not Pro): Opus 5.5 in the main loop plans and reviews, Sonnet 5.5 sub-agents do the bounded work, and Fable 5.1 is a rare read-only consultant for architecture decisions and problems Opus cannot crack. Load whenever spawning sub-agents (Agent tool or Workflow agent() calls) or planning delegation. If the plan is unknown, load this one rather than claude-orchestrator: its first step checks the plan and hands off to claude-orchestrator when not on Max."
 ---
 
 # Orchestration & delegation policy (Max plan, Fable as consultant)
@@ -32,9 +32,11 @@ shows the plan.
 
 ## The hard rules
 
-1. **Always set `model` explicitly** on every Agent call (`"sonnet"`,
-   `"opus"` or `"fable"`). An omitted model inherits the main loop and silently
-   fans out Opus.
+1. **Always set `model` explicitly** (`"sonnet"`, `"opus"` or `"fable"`) on
+   every Agent call, every Workflow `agent()` call, and every `meta.phases`
+   entry whose phase runs on that model. An omitted model inherits the main
+   loop and silently fans out Opus. The Workflow reference says to omit it by
+   default; under this policy, don't.
 2. **Hands-on while limits are healthy.** The main loop does small and medium
    work itself. Delegate work that is parallelizable, large and mechanical, or
    would flood the main context.
@@ -52,12 +54,25 @@ shows the plan.
 
 - **Sonnet**: exploration, codebase mapping, research sweeps, verification
   passes, templated changes, clones of an existing pattern, features that ride
-  an existing pipeline. Invest in the brief; a Sonnet lane is only as good as it.
+  an existing pipeline.
 - **Opus sub-agent**: the hard bounded lane from rule 3, and the fresh-eyes
   review of risky work.
 - **Main loop**: everything in rule 5, plus hard execution that needs the
   whole picture.
 - **Fable**: only the consultation triggers below.
+
+## The brief is the ceiling
+
+A delegated lane is never better than its brief. Spend main-loop tokens on
+the brief, not on doing the lane yourself. Every brief states:
+
+- the goal and what "done" looks like,
+- the files or places to start from,
+- the constraints that must hold and what is out of scope,
+- what to return, in what shape.
+
+When a lane comes back wrong, fix the brief first. Move to a stronger model
+only if a clear brief still fails.
 
 ## When to consult Fable
 
