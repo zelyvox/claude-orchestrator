@@ -5,13 +5,13 @@
 Skills for running Claude Code on a single Claude subscription without wasting
 it. **Opus 5.5** in the main loop keeps judgment, specs and review;
 **Sonnet 5.5** sub-agents gather context and carry simple execution. On a Max
-plan, **Fable 5.1** carries the judgment: the operator's design partner in the
-main loop, or a rare, read-only consultant Opus calls for the hardest calls.
+plan, **Fable 5.1** takes the main loop and Opus moves down to the hard lanes
+and reviews.
 
 | Skill | Plan | What it does |
 |---|---|---|
 | [claude-orchestrator](skills/claude-orchestrator/SKILL.md) | Pro ($20) | Delegation policy for Opus + Sonnet: who gets which work. |
-| [claude-orchestrator-max](skills/claude-orchestrator-max/SKILL.md) | Max ($100) | Same idea with more room for Opus sub-agents, effort per lane, and Fable in two roles: design partner in the main loop (design on Fable, build on Opus), or a consultant Opus calls, with its triggers, brief and budget. |
+| [claude-orchestrator-max](skills/claude-orchestrator-max/SKILL.md) | Max ($100) | Fable 5.1 in the main loop owns architecture, specs, briefs and acceptance; Opus 5.5 sub-agents carry the hard lanes and fresh-eyes reviews; Sonnet 5.5 gathers context and does simple bounded work. Effort per lane, and a budget rule for the Fable weekly window. |
 | [claude-limit](skills/claude-limit/SKILL.md) | any | Colored screen of the 5-hour and 7-day usage windows, plus model-scoped weekly windows such as Fable on Max, and what to do at each level. |
 
 Each policy is one Markdown file and loads only when sub-agents are spawned;
