@@ -1,22 +1,23 @@
 ---
 name: claude-orchestrator-max
-description: "Delegation policy for a Claude Max plan only (not Pro): Opus 5.5 in the main loop plans and reviews, Sonnet 5.5 sub-agents do the bounded work, and Fable 5.1 is a rare read-only consultant for architecture decisions and problems Opus cannot crack. Load whenever spawning sub-agents (Agent tool) or planning delegation. If the plan is unknown, load this one rather than claude-orchestrator: its first step checks the plan and hands off to claude-orchestrator when not on Max."
+description: "Delegation policy for a Claude Max plan only (not Pro): Fable 5.1 runs the main loop and owns architecture, specs, briefs, integration and review; Opus 5.5 sub-agents carry the hard, precision lanes and fresh-eyes reviews; Sonnet 5.5 sub-agents gather context and carry simple bounded work. Fable is never spawned as a sub-agent. Load whenever spawning sub-agents (Agent tool or Workflow agent() calls) or planning any delegation. If the plan is unknown, load this one rather than claude-orchestrator: its first step checks the plan and hands off to claude-orchestrator when not on Max."
 ---
 
-# Orchestration & delegation policy (Max plan, Fable as consultant)
+# Orchestration & delegation policy (Max plan, Fable in the main loop)
 
-A routing policy for one Claude **Max** plan: **Opus 5.5 in the main loop**,
-**Sonnet 5.5 as the default delegate**, and **Fable 5.1 as a consultant** that
-answers hard questions but does not do the work.
+A routing policy for one Claude **Max** plan with one scarce main-loop model
+and two delegate tiers: **Fable 5.1 in the main loop**, **Opus 5.5** for
+hard lanes and reviews, **Sonnet 5.5** for context gathering and simple
+execution.
 
-Core law: **Opus thinks and decides, Sonnet executes, Fable advises.** Fable's
-tokens buy a second, stronger opinion at the few points where a wrong call is
-expensive, never throughput.
+Core law: **the scarce model is never spawned as a sub-agent and never does
+throughput work.** Fable's tokens buy judgment: architecture, specs, briefs,
+integration, synthesis, acceptance. Everything mechanical goes down a tier.
 
 ## Check the plan first
 
-Run the `claude-limit` skill once at the start of a delegated job. Its header
-shows the plan.
+Run the `claude-limit` skill once per session, before the first delegation.
+Its header shows the plan.
 
 - `plan: max` → this policy applies.
 - Anything else (e.g. after switching to a Pro account) → stop using this
@@ -24,117 +25,112 @@ shows the plan.
 
 ## The pools
 
-- **Opus and Sonnet** share the plan's 5-hour and 7-day windows. Opus burns
-  them much faster.
 - **Fable** has its own weekly window (`Fable 7-day` in `claude-limit`) and
   also counts toward the all-model 7-day window, up to the share the line
-  shows (`may use up to N% of 7-day`).
+  shows (`may use up to N% of 7-day`). Every main-loop turn draws on it.
+- **Opus and Sonnet** share the plan's 5-hour and 7-day windows. Opus burns
+  them much faster.
 
 ## The hard rules
 
-1. **Always set `model` explicitly** on every Agent call (`"sonnet"`,
-   `"opus"` or `"fable"`). An omitted model inherits the main loop and silently
-   fans out Opus.
-2. **Hands-on while limits are healthy.** The main loop does small and medium
-   work itself. Delegate work that is parallelizable, large and mechanical, or
-   would flood the main context.
-3. **Opus sub-agents are allowed, not reflexive.** Max has room for them, so
-   use one for a hard, bounded lane Sonnet can't carry (security-critical
-   change, correctness-sensitive path, fresh-eyes review of risky work) and
-   state the reason in the plan.
-4. **Fable is a consultant, never a worker.** It reads and answers. It does
-   not edit files, commit, run long jobs, or review routine diffs.
-5. **The main loop owns the decision.** Architecture, specs, integration,
-   final synthesis, review and acceptance stay in the main loop, including
-   after a Fable consultation.
+1. **Never spawn Fable.** No Agent call or Workflow `agent()` with
+   `model: "fable"`; the main loop is the only Fable. The one exception is
+   the operator naming Fable for a scoped task.
+2. **Always set `model` explicitly** (`"sonnet"` or `"opus"`) on every Agent
+   call and every Workflow `agent()` call; `meta.phases` entries carry the
+   same model for display. An omitted model inherits the main loop and
+   silently fans out Fable. The Workflow reference says to omit it by
+   default; under this policy, don't.
+3. **Hands-on while limits are healthy.** The main loop does small and
+   medium work itself; delegation has its own overhead. Delegate work that is
+   parallelizable, large and mechanical, or would flood the main context.
+4. **The main loop keeps the big picture.** Architecture, specs,
+   contract-sensitive design, subtle state machines, integration, conflict
+   resolution, final synthesis, judgment calls and acceptance stay in the
+   main loop.
+5. **The main loop writes the brief.** Sub-agents receive a spec written by
+   Fable, not a goal to interpret. See "The brief is the ceiling".
 
 ## Choosing the delegate
 
-- **Sonnet**: exploration, codebase mapping, research sweeps, verification
-  passes, templated changes, clones of an existing pattern, features that ride
-  an existing pipeline. Invest in the brief; a Sonnet lane is only as good as it.
-- **Opus sub-agent**: the hard bounded lane from rule 3, and the fresh-eyes
-  review of risky work.
-- **Main loop**: everything in rule 5, plus hard execution that needs the
-  whole picture.
-- **Fable**: only the consultation triggers below.
+The routing axis is **difficulty**, not only recon versus execution.
 
-## When to consult Fable
+- **Sonnet, the default for bounded work**: exploration, codebase mapping,
+  research sweeps, verification passes, templated changes, clones of an
+  existing pattern, features that ride an existing pipeline end to end.
+  Sonnet copes with a looser brief when the deliverable is understanding,
+  not a diff.
+- **Opus, for the hard and precision lanes**: correctness-sensitive paths,
+  security-critical strengthen-never-relax changes, the largest surfaces,
+  migrations and refactors against a complete spec, and the fresh-eyes
+  review of risky work. Opus is a strong instruction follower: give it a
+  complete, explicit spec and it executes it precisely. It is not a second
+  main loop; it does not redesign.
+- **Main loop (Fable)**: everything in rule 4, plus hard execution that
+  needs the whole picture.
+- **Haiku**: not used. Two delegate tiers keep routing auditable; a Sonnet
+  lane at low effort covers the mechanical end.
 
-Only these three:
+Rule of thumb: **context gathering and simple execution → Sonnet; hard
+execution against a spec → Opus; judgment, spec-writing and synthesis → the
+main loop.**
 
-1. **A costly, hard-to-reverse design decision** (data model, public API or
-   contract, module split, choice of core dependency) where the main loop sees
-   at least two credible options and no clear winner.
-2. **The main loop is stuck.** Two *different* hypotheses, each tested with
-   evidence, have failed (retrying the same fix is one attempt). A Sonnet
-   sweep has already mapped the relevant files; Fable gets the map, not the
-   search.
-3. **A new or changed trust boundary** (authentication, authorization,
-   secrets, untrusted input reaching privileged code), before implementation,
-   even when one option looks clear. Not: any edit in a security-adjacent file.
+## The brief is the ceiling
 
-The operator saying "ask Fable" (or naming Fable for a question) bypasses the
-triggers; the budget gate still applies.
+A delegated lane is never better than its brief. Once the decision to
+delegate is made, spend main-loop tokens on the brief, not on doing the lane
+yourself. Every brief states:
 
-Not for: routine review, exploration, anything a Sonnet sweep can answer,
-"just to be sure" on a decision that is already clear, and product decisions
-(what the user should experience, which external dependency to add). Those go
-to the operator.
+- the goal and what "done" looks like,
+- the files or places to start from,
+- the constraints that must hold and what is out of scope,
+- what to return, in what shape.
 
-## How to consult
+An Opus lane gets the complete spec: exact files, exact contract, exact
+acceptance checks, and what not to touch. When a lane comes back wrong: fix
+the brief, then raise the effort, then raise the model, in that order.
 
-- Agent tool, `model: "fable"`. Say in the prompt what it may do: read files,
-  grep, `git log`/`git diff`, run tests or a reproduction. And what it may not:
-  no file edits, no commits, no installs, no network side effects.
-- The brief, in this order:
-  1. The question in one sentence.
-  2. Constraints that must hold.
-  3. The options, stated neutrally. Ask for Fable's own ranking first; give
-     the main loop's leaning last, for Fable to attack. A handed-over
-     conclusion tends to come back confirmed.
-  4. If stuck: the hypotheses tested, how, and what happened (exact errors).
-  5. The files to read: a short list of paths, no open-ended sweep. Let Fable
-     read the code; don't paste whole files.
-  6. The answer wanted: recommendation, reasoning, main risks, what would
-     change the answer, claims tagged *verified in code* or *assumed*, and a
-     word limit.
-- One consultation per decision. A follow-up goes to the same agent
-  (SendMessage), not to a new one.
-- After the answer: check its factual claims against the code, decide, and
-  record the decision and the reason in the plan. If the main loop disagrees
-  with Fable, tell the operator both views instead of silently overriding.
+## Effort
 
-## Budget
+The Agent tool and Workflow `agent()` set reasoning effort only when a skill
+or the operator asks for it; this policy is that instruction.
 
-- Before each consultation, run `claude-limit`. Don't consult if `Fable 7-day`
-  is at 90% or more, the all-model 7-day window is at 85% or more, or either
-  is unknown. The main loop decides, or asks the operator.
-- `Fable 7-day` comes only from the live endpoint. If it is unknown, tell the
-  operator that Fable is unavailable and why; don't skip it silently.
-- The 5-hour and 7-day rules in `claude-limit` apply to every model.
-- Expect a few consultations a week. A second consultation in one session
-  needs a one-line reason in the plan; before a third, ask the operator.
-  Follow-ups through SendMessage count.
+- Sonnet mechanical lanes (inventory, sweeps, templated changes): `low`;
+  `medium` when the lane has to make small judgment calls.
+- Opus hard lanes: `high`.
+- Opus fresh-eyes review of risky work: `high`, regardless of the size of
+  the diff.
 
 ## Review
 
-- The main loop reviews every delegated result before accepting it.
-- Risky work (security, data, external integrations) gets an extra review by a
-  fresh Opus sub-agent that did not carry the implementation context.
-- Fable does not review code diffs. Its security role is the design-time
-  consultation of trigger 3; review after implementation stays with the fresh
-  Opus sub-agent.
+- The main loop reviews every delegated result before accepting it; it does
+  not accept a lane's own claim of success.
+- Risky work (security, data, external integrations) gets an extra review by
+  a fresh Opus sub-agent that did not carry the implementation context,
+  before the main loop's acceptance.
+
+## Budget
+
+- Run `claude-limit` once per session; re-run it before a large fan-out.
+- The 5-hour and 7-day rules in `claude-limit` apply to every model.
+- `Fable 7-day` comes only from the live endpoint. If it is unknown, say so
+  to the operator; don't guess.
+- At 75% of `Fable 7-day`, tell the operator and keep main-loop reading
+  light (Sonnet maps, Fable reads the map). At 90%, stop and tell the
+  operator; the fallback is `/model opus`, after which the same delegation
+  rules apply with Opus as the main loop and Fable out of the stack until
+  the window resets. Never switch silently.
 
 ## Planning
 
-When planning, stamp the model on every task so spawning is mechanical:
+When planning, stamp the model and effort on every task so spawning is
+mechanical and no routing decision happens at spawn time:
 
-`Sonnet → inventory · Sonnet ×2 → A, B · Opus sub → auth lane · Fable → consult: storage schema · main loop → integration, review`
+`Sonnet low → inventory · Sonnet medium ×2 → A, B · Opus high → auth lane · Opus high → fresh-eyes review · main loop → spec, integration, acceptance`
 
 ## Exceptions
 
 - If the operator names a model for a scoped task, honor it for that task
   only, then return to this policy.
-- The operator can override any of this per session; absent that, this policy
-  stands.
+- The operator can override any of this per session; absent that, this
+  policy stands.
