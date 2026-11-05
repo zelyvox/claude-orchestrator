@@ -1,6 +1,6 @@
 ---
 name: lider
-description: "Lider modu, yalnız Claude Max planı: Fable 5.1 ana döngüde hiç iş yapmaz, dosya yazmaz, komut çalıştırmaz, ham malzeme okumaz; brief yazar, işi Sonnet 5.5 ve Opus 5.5 hatlarına dağıtır, raporla kabul eder. Yusuf 'lider skill'ini oku' deyince yüklenir ve oturum boyu geçerlidir; model yönlendirme ve bütçe kuralları claude-orchestrator-max'tan gelir."
+description: "Lider modu, yalnız Claude Max planı: Fable 5.1 ana döngüde hiç iş yapmaz, dosya yazmaz, komut çalıştırmaz, ham malzeme okumaz; brief yazar, işi Sonnet 5.5 ve Opus 5.5 hatlarına dağıtır, raporla kabul eder. Yusuf 'lider skill'ini oku' deyince yüklenir ve oturum boyu geçerlidir; model yönlendirme ve bütçe kuralları claude-orchestrator-max'tan gelir. Basamak mantığı: lider modeli oturum başında claude-limit'e göre seçilir (Fable → Opus → Sonnet)."
 ---
 
 # Lider modu (Max planı, Fable ana döngüde)
@@ -27,6 +27,9 @@ hatta iner.
   - "Ana döngü her sonucu kendisi inceler": yerine döngünün 5. ve 6.
     adımları geçer.
   - `claude-limit`'i ana döngünün çalıştırması: Sonnet low hattı çalıştırır.
+  - Fable 7 günlük %75'te "uyar ve okumayı hafif tut" kuralı: yerine
+    Basamak 2 varsayılanı geçer (bkz. Basamak). %90 zorunluluğu aynen
+    kalır.
 - Oturum boyu geçerlidir. Bağlam sıkıştırılırsa Lider yeniden yüklenir.
 
 ## Çekirdek yasa
@@ -61,19 +64,19 @@ hatta iner.
 3. **Planla.** Lider işi böler; her görev `model · efor → iş` olarak
    damgalanır (max skill'in planlama satırı biçimi). Ajan açılırken
    yönlendirme kararı kalmaz.
-4. **Uygula.** Sonnet basit ve sınırlı işi, Opus zor ve hassas işi taşır.
-   Her hat tam brief alır. Yazan her hat kendi dalında çalışır; aynı repoda
-   aynı anda yazan hatlar ayrı worktree'de çalışır. Bir hat yazarken o
-   repoda dal değiştirilmez.
+4. **Uygula.** Sonnet basit ve sınırlı işi, Opus zor ve hassas işi taşır
+   (Basamak 3'te Opus açılmaz; bkz. Basamak). Her hat tam brief alır. Yazan
+   her hat kendi dalında çalışır; aynı repoda aynı anda yazan hatlar ayrı
+   worktree'de çalışır. Bir hat yazarken o repoda dal değiştirilmez.
 5. **Kontrol.** Kontrol her zaman uygulayandan ayrı, uygulama bağlamı
    taşımayan taze bir ajandır; lider kendisi kontrol etmez. Model işe göre
    ölçeklenir: basit ve düşük riskli Sonnet hatlarını Sonnet medium kontrol
    eder; zor ve riskli (güvenlik, veri, dış entegrasyon) hatları ve her Opus
-   hattını Opus high kontrol eder (max skill kuralı). İki seviyede de
-   inceleyen, kapsam içindeki bulguları (hattın dosyaları ve spec'i içinde)
-   **kendisi düzeltir** ve "düzeltildi" diye raporlar; tasarım veya spec
-   sorununu yama yapmadan lidere karar olarak getirir. İnceleyen, hat
-   bittikten sonra aynı worktree'de çalışır.
+   hattını Opus high kontrol eder (max skill kuralı; Basamak 3'te Sonnet
+   medium). İki seviyede de inceleyen, kapsam içindeki bulguları (hattın
+   dosyaları ve spec'i içinde) **kendisi düzeltir** ve "düzeltildi" diye
+   raporlar; tasarım veya spec sorununu yama yapmadan lidere karar olarak
+   getirir. İnceleyen, hat bittikten sonra aynı worktree'de çalışır.
 6. **Kabul.** Kabul yalnız raporla olur: uygulayan hattın raporu ve kontrol
    hattının raporu. Test veya kabul komutunun sonucu bu raporlarda yoksa ya
    da şüpheliyse ayrı bir Sonnet low doğrulama hattı açılır: komutu
@@ -128,19 +131,59 @@ raporu en çok 1 sayfadır.
   kalan iş hatta iner.
 - Paralel hatlar bağımsız olduğunda aynı anda açılır.
 
+## Basamak (merdiven)
+
+Avenox'un X cevabı: "o skill eskidi, modeller çok değişti; orchestrator
+Opus, alt agent Sonnet, limitlerinize göre bu merdiven mantığını kullanın,
+önemli olan merdiven mantığı." Sabit olan model adı değil merdivendir:
+**lider zeki, hatlar ucuz, lider işe bulaşmaz.** Basamak, limitlere göre
+hangi modelin lider, hangisinin hat olacağını söyler.
+
+| Basamak | Lider | Zor hat ve taze kontrol | Basit hat ve basit kontrol | Ne zaman |
+|---|---|---|---|---|
+| 1 | Fable 5.1 | Opus 5.5 high | Sonnet 5.5 low/medium; kontrol Sonnet medium | Fable 7 günlük < %75 ve ortak 5 saatlik / 7 günlük pencereler sağlıklı |
+| 2 | Opus 5.5 (`/model opus`) | Opus 5.5 high | Sonnet 5.5 low/medium; kontrol Sonnet medium | Fable 7 günlük ≥ %75 (varsayılan; Yusuf aksini söyleyebilir); ≥ %90 ya da Fable penceresi bilinmiyorsa zorunlu. Fable pencere sıfırlanana kadar dışarıda. |
+| 3 | Sonnet 5.5 (`/model sonnet`) | Opus açılmaz; zor iş Sonnet medium, kontrol Sonnet medium | Sonnet 5.5 low | Ortak 7 günlük pencere duvara ~5 puan kala. Az ajan, sıralı çalışma. Pencere duvardaysa `claude-limit` tablosu geçerli: dağıtım yok, Yusuf'a sor. |
+
+Seçim kuralları:
+
+- Basamak oturum başında seçilir: Sonnet low hattının `claude-limit` raporu
+  gelince lider basamağı tek satırla Yusuf'a bildirir ("Basamak 2: Fable 7g
+  %79, lider Opus"). Rapor gelmeden hat açılmaz.
+- En dolu geçerli pencere bağlayıcıdır (`claude-limit` kuralı). Sıra: plan
+  Max değilse Lider uygulanmaz; ortak 7 günlük pencere duvara ~5 puan
+  kalaysa Basamak 3; Fable 7 günlük ≥ %75 ya da bilinmiyorsa Basamak 2;
+  aksi halde Basamak 1.
+- Lider `/model` komutunu kendisi çalıştıramaz. Basamak değişimi gerekiyorsa
+  Yusuf'a tek satırla söyler ("`/model opus` yaz, Basamak 2'ye geçiyoruz"),
+  Yusuf yazar. Sessiz geçiş yok (max skill kuralı).
+- Basamak oturum içinde değişebilir: büyük dağıtım öncesi `claude-limit`
+  yeniden koşar; sayaç sıradaki basamağın eşiğine gelince lider bunu
+  söyler. Yalnız aşağı inilir (1 → 2 → 3); pencere sıfırlanmadan yukarı
+  çıkılmaz.
+- Basamak değişince Lider kuralları değişmez: lider hangi model olursa olsun
+  iş yapmaz, dosya yazmaz, komut çalıştırmaz, raporla kabul eder. Değişen
+  yalnız modellerdir.
+- Her basamakta model her Agent ve Workflow `agent()` çağrısında açık
+  yazılır; Fable hiçbir basamakta alt ajan olmaz (max skill kuralı; tek
+  istisna Yusuf'un açık adlandırması, bkz. İstisnalar).
+- Seçilen basamak oturum kapanışında Last-Session kartına bir kelimeyle
+  geçer (Devir adımında Sonnet yazar).
+
 ## Bütçe
 
 - `claude-limit` oturum başında ve büyük dağıtım öncesi Sonnet low hattında
   çalışır; lider komutu kendisi çalıştırmaz. Hat planı, 5 saatlik, 7 günlük
   ve Fable 7 günlük pencereleri birkaç satırla raporlar; bir değer
   bilinmiyorsa tahmin etmez, bilinmiyor der. Max skill'in plan kontrolü de
-  bu raporla yapılır: plan Max değilse Lider uygulanmaz.
+  bu raporla yapılır: plan Max değilse Lider uygulanmaz. Rapor gelince
+  basamak seçilir (bkz. Basamak).
 - Lider modunda ajan sayısı artar; 5 saatlik ve 7 günlük pencereler de
-  izlenir. Max skill'in Fable %75 ve %90 kuralları geçerlidir.
-- Fable %90'da `/model opus`'a geçilince Lider modu sürer: lider artık
-  Opus'tur ve aynı kurallar geçerlidir (iş yapmaz, dosya yazmaz, komut
-  çalıştırmaz, raporla kabul eder). Fable pencere sıfırlanana kadar
-  dışarıdadır; zor hatlar yine Opus, basit iş Sonnet.
+  izlenir. Max skill'in Fable %75 ve %90 eşikleri Lider modunda Basamak
+  tablosuyla uygulanır.
+- Lider modeli değişince (`/model opus` ya da `/model sonnet`) Lider modu
+  sürer; hangi modelin lider ve hat olacağını Basamak tablosu belirler
+  (bkz. Basamak).
 - Fable sayacı: brief yazmak ve rapor okumak da Fable tokeni harcar. Lider
   bağlamı küçültür, haftalık Fable sayacını sıfırlamaz; bu kabul edildi.
 
