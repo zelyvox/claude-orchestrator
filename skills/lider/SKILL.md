@@ -27,9 +27,10 @@ hatta iner.
   - "Ana döngü her sonucu kendisi inceler": yerine döngünün 5. ve 6.
     adımları geçer.
   - `claude-limit`'i ana döngünün çalıştırması: Sonnet low hattı çalıştırır.
-  - Fable 7 günlük %75'te "uyar ve okumayı hafif tut" kuralı: yerine
-    Basamak 2 varsayılanı geçer (bkz. Basamak). %90 zorunluluğu aynen
-    kalır.
+  - Fable 7 günlük "%75'te uyar, %90'da dur ve Opus'a geç" kuralı: yerine
+    Lider modunda tek eşik vardır, %85'te otomatik devir (bkz. Basamak).
+    %90 kuralı Lider modunda ayrıca gerekmez; lider o noktada zaten
+    Opus'tadır.
 - Oturum boyu geçerlidir. Bağlam sıkıştırılırsa Lider yeniden yüklenir.
 
 ## Çekirdek yasa
@@ -141,22 +142,27 @@ hangi modelin lider, hangisinin hat olacağını söyler.
 
 | Basamak | Lider | Zor hat ve taze kontrol | Basit hat ve basit kontrol | Ne zaman |
 |---|---|---|---|---|
-| 1 | Fable 5.1 | Opus 5.5 high | Sonnet 5.5 low/medium; kontrol Sonnet medium | Fable 7 günlük < %75 ve ortak 5 saatlik / 7 günlük pencereler sağlıklı |
-| 2 | Opus 5.5 (`/model opus`) | Opus 5.5 high | Sonnet 5.5 low/medium; kontrol Sonnet medium | Fable 7 günlük ≥ %75 (varsayılan; Yusuf aksini söyleyebilir); ≥ %90 ya da Fable penceresi bilinmiyorsa zorunlu. Fable pencere sıfırlanana kadar dışarıda. |
+| 1 | Fable 5.1 | Opus 5.5 high | Sonnet 5.5 low/medium; kontrol Sonnet medium | Fable 7 günlük < %85 ve ortak 5 saatlik / 7 günlük pencereler sağlıklı |
+| 2 | Opus 5.5 (`/model opus`) | Opus 5.5 high | Sonnet 5.5 low/medium; kontrol Sonnet medium | Fable 7 günlük ≥ %85 ya da Fable penceresi bilinmiyor. Devir otomatik. Fable pencere sıfırlanana kadar dışarıda. |
 | 3 | Sonnet 5.5 (`/model sonnet`) | Opus açılmaz; zor iş Sonnet medium, kontrol Sonnet medium | Sonnet 5.5 low | Ortak 7 günlük pencere duvara ~5 puan kala. Az ajan, sıralı çalışma. Pencere duvardaysa `claude-limit` tablosu geçerli: dağıtım yok, Yusuf'a sor. |
 
 Seçim kuralları:
 
 - Basamak oturum başında seçilir: Sonnet low hattının `claude-limit` raporu
   gelince lider basamağı tek satırla Yusuf'a bildirir ("Basamak 2: Fable 7g
-  %79, lider Opus"). Rapor gelmeden hat açılmaz.
+  %86, lider Opus"). Rapor gelmeden hat açılmaz.
 - En dolu geçerli pencere bağlayıcıdır (`claude-limit` kuralı). Sıra: plan
   Max değilse Lider uygulanmaz; ortak 7 günlük pencere duvara ~5 puan
-  kalaysa Basamak 3; Fable 7 günlük ≥ %75 ya da bilinmiyorsa Basamak 2;
+  kalaysa Basamak 3; Fable 7 günlük ≥ %85 ya da bilinmiyorsa Basamak 2;
   aksi halde Basamak 1.
-- Lider `/model` komutunu kendisi çalıştıramaz. Basamak değişimi gerekiyorsa
-  Yusuf'a tek satırla söyler ("`/model opus` yaz, Basamak 2'ye geçiyoruz"),
-  Yusuf yazar. Sessiz geçiş yok (max skill kuralı).
+- Devir otomatiktir; soru yok, karar yok. Eşik geçildiği anda (oturum başı
+  raporunda ya da oturum içi yeniden ölçümde) lider Yusuf'a tek satır yazar
+  ("Fable 7g %86, liderlik Opus'a devrediliyor: `/model opus` yaz") ve
+  `/model opus` gelmeden yeni hat açmaz. Yusuf'a seçenek sunulmaz, gerekçe
+  tartışılmaz. Basamak 3'e iniş de aynı biçimdedir (`/model sonnet`).
+- Teknik not: lider `/model` komutunu kendisi yazamaz; bu yüzden devir
+  Yusuf'un tek satırlık komutuyla tamamlanır. Skill açısından devir zorunlu
+  ve sorusuzdur. Sessiz geçiş yok (max skill kuralı).
 - Basamak oturum içinde değişebilir: büyük dağıtım öncesi `claude-limit`
   yeniden koşar; sayaç sıradaki basamağın eşiğine gelince lider bunu
   söyler. Yalnız aşağı inilir (1 → 2 → 3); pencere sıfırlanmadan yukarı
@@ -179,8 +185,8 @@ Seçim kuralları:
   bu raporla yapılır: plan Max değilse Lider uygulanmaz. Rapor gelince
   basamak seçilir (bkz. Basamak).
 - Lider modunda ajan sayısı artar; 5 saatlik ve 7 günlük pencereler de
-  izlenir. Max skill'in Fable %75 ve %90 eşikleri Lider modunda Basamak
-  tablosuyla uygulanır.
+  izlenir. Max skill'in Fable eşikleri yerine Lider modunda tek eşik
+  vardır: Fable 7 günlük %85'te Opus'a otomatik devir (bkz. Basamak).
 - Lider modeli değişince (`/model opus` ya da `/model sonnet`) Lider modu
   sürer; hangi modelin lider ve hat olacağını Basamak tablosu belirler
   (bkz. Basamak).
