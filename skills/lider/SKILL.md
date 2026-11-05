@@ -15,8 +15,8 @@ hatta iner.
 
 - Yusuf "lider skill'ini oku" deyince yüklenir.
 - Lider yüklenince `claude-orchestrator-max` ve `claude-limit` skill'leri de
-  okunur. Model seçimi, efor, bütçe, "Fable asla alt ajan olmaz" ve "model
-  her çağrıda açık" kuralları oradan gelir. `claude-limit`'i lider
+  okunur. Model seçimi, efor, bütçe, "Fable alt ajan olmaz" ve "model her
+  çağrıda açık" kuralları oradan gelir. `claude-limit`'i lider
   çalıştırmaz (bkz. Bütçe).
 - Çelişkide Lider üstündür. Max skill'in şu maddeleri Lider modunda
   kapalıdır:
@@ -47,9 +47,10 @@ hatta iner.
   tek şey skill dosyaları ve ajan raporlarıdır.
 - "Küçük iş" istisnası yoktur: tek satırlık düzeltme bile Sonnet low hattına
   gider. Brief ve rapor maliyeti bilinçli kabul edildi.
-- Fable alt ajan olarak asla açılmaz; her Agent ve Workflow `agent()`
-  çağrısında `model` açık yazılır (`"sonnet"` veya `"opus"`). İkisi de max
-  skill kuralıdır.
+- Fable alt ajan olarak açılmaz; tek istisna, max skill'deki gibi, Yusuf'un
+  belirli bir iş için Fable'ı açıkça adlandırmasıdır. Her Agent ve Workflow
+  `agent()` çağrısında `model` açık yazılır (`"sonnet"` veya `"opus"`).
+  İkisi de max skill kuralıdır.
 
 ## Döngü
 
@@ -64,10 +65,14 @@ hatta iner.
    Her hat tam brief alır. Yazan her hat kendi dalında çalışır; aynı repoda
    aynı anda yazan hatlar ayrı worktree'de çalışır. Bir hat yazarken o
    repoda dal değiştirilmez.
-5. **Kontrol.** Uygulama bağlamı taşımayan taze bir Opus (high) inceleme
-   yapar. İnceleyen, kapsam içindeki bulguları (hattın dosyaları ve spec'i
-   içinde) **kendisi düzeltir** ve "düzeltildi" diye raporlar; tasarım veya
-   spec sorununu yama yapmadan lidere karar olarak getirir. İnceleyen, hat
+5. **Kontrol.** Kontrol her zaman uygulayandan ayrı, uygulama bağlamı
+   taşımayan taze bir ajandır; lider kendisi kontrol etmez. Model işe göre
+   ölçeklenir: basit ve düşük riskli Sonnet hatlarını Sonnet medium kontrol
+   eder; zor ve riskli (güvenlik, veri, dış entegrasyon) hatları ve her Opus
+   hattını Opus high kontrol eder (max skill kuralı). İki seviyede de
+   inceleyen, kapsam içindeki bulguları (hattın dosyaları ve spec'i içinde)
+   **kendisi düzeltir** ve "düzeltildi" diye raporlar; tasarım veya spec
+   sorununu yama yapmadan lidere karar olarak getirir. İnceleyen, hat
    bittikten sonra aynı worktree'de çalışır.
 6. **Kabul.** Kabul yalnız raporla olur: uygulayan hattın raporu ve kontrol
    hattının raporu. Test veya kabul komutunun sonucu bu raporlarda yoksa ya
@@ -132,12 +137,19 @@ raporu en çok 1 sayfadır.
   bu raporla yapılır: plan Max değilse Lider uygulanmaz.
 - Lider modunda ajan sayısı artar; 5 saatlik ve 7 günlük pencereler de
   izlenir. Max skill'in Fable %75 ve %90 kuralları geçerlidir.
+- Fable %90'da `/model opus`'a geçilince Lider modu sürer: lider artık
+  Opus'tur ve aynı kurallar geçerlidir (iş yapmaz, dosya yazmaz, komut
+  çalıştırmaz, raporla kabul eder). Fable pencere sıfırlanana kadar
+  dışarıdadır; zor hatlar yine Opus, basit iş Sonnet.
 - Fable sayacı: brief yazmak ve rapor okumak da Fable tokeni harcar. Lider
   bağlamı küçültür, haftalık Fable sayacını sıfırlamaz; bu kabul edildi.
 
 ## İstisnalar
 
-- Tek istisna: Yusuf belirli bir iş için açıkça "sen yap" derse, yalnız o
-  işi lider kendisi yapar, sonra Lider moduna döner.
+- Liderin kendisi iş yapmasının tek istisnası: Yusuf belirli bir iş için
+  açıkça "sen yap" derse, yalnız o işi lider kendisi yapar, sonra Lider
+  moduna döner.
+- Yusuf belirli bir iş için Fable'ı açıkça adlandırırsa, yalnız o iş için
+  Fable alt ajan olarak açılır (bkz. Çekirdek yasa).
 - Dosya yazmayan anlatım ve soru-cevap zaten liderin işidir, ajan gerekmez.
   Ama anlatım için ham kaynak okumak gerekiyorsa kaynağı Sonnet özetler.
