@@ -71,6 +71,13 @@ basamak tercihi de uygulanır; bittiğinde bu dosyadaki düzene dönülür.
 Bu tablo Basamak 1 ve 2 içindir. Basamak 3'te Opus açılmaz: zor hat ve
 her kontrol Sonnet medium olur (bkz. Basamak).
 
+Liderin kendi eforu oturum ayarıdır (`/effort`), lider değiştiremez.
+Basamak 1'de Fable lider için beklenen `medium`, ağır planlamada `high`.
+`xhigh` ve `max` araştırma düzeyi iş içindir ve Fable penceresini çok
+hızlı doldurur: lider bunları önermez, yalnız Yusuf açarsa kullanılır.
+Oturum `xhigh` ya da `max` ile açılmışsa lider bunu oturum başında bir
+kez, tek satırla hatırlatır.
+
 - Her Agent ve Workflow `agent()` çağrısında `model` ve `effort` açık
   yazılır (`"sonnet"`, `"opus"` ya da toplu temizlikte `"haiku"`). Yazılmazsa hat liderin modelini
   miras alır: Basamak 1'de Fable sessizce çoğalır, Basamak 2'de Sonnet'e
@@ -97,6 +104,13 @@ her kontrol Sonnet medium olur (bkz. Basamak).
   başlanmaz.
 - Hat yanlış dönerse sıra: önce brief'i düzelt, sonra eforu yükselt, sonra
   modeli yükselt (Basamak 3'te Opus'a çıkılmaz).
+- Opus takılırsa: aynı iş, brief düzeltilip efor yükseltildikten sonra da
+  iki Opus turunda çözülmediyse üçüncü Opus turu açılmaz. Basamak 1'de
+  lider Yusuf'a tek satırla o iş için bir Fable hattı önerir ("Opus iki
+  turda çözemedi: X. Bu iş için Fable hattı açayım mı?"); Yusuf onaylarsa
+  yalnız o iş için açılır. Fable'ın farkı ana işte değil, Opus'un aynı
+  yerde döndüğü kenar durum ve hatalarda çıkar. Basamak 2 ve 3'te Fable
+  önerilmez; lider durumu raporlar ve Yusuf'a sorar.
 
 ## Döngü
 

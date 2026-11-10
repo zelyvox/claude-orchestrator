@@ -128,6 +128,13 @@ How tight to write depends on who reads it and what the work is:
 When a lane comes back wrong: fix the brief, then raise the effort, then
 raise the model, in that order.
 
+When Opus is stuck: if the same task is still unsolved after two Opus
+rounds (brief fixed, effort raised), do not open a third. The main loop
+takes that task itself, telling the operator in one line first. Fable's
+edge over Opus shows in the edge cases and bugs where Opus keeps circling,
+not in the bulk of the work. If the Fable window is past the threshold,
+report and ask instead.
+
 ## Effort
 
 The Agent tool and Workflow `agent()` set reasoning effort only when a skill
@@ -139,6 +146,12 @@ or the operator asks for it; this policy is that instruction.
   on completion; high's gain is in subtle bugs, which the review catches.
 - Opus fresh-eyes review (every Opus lane and any risky work): `high`,
   regardless of the size of the diff.
+- The main loop's own effort is the session setting (`/effort`); the main
+  loop cannot change it. Expected for Fable: `medium`, `high` for heavy
+  planning. `xhigh` and `max` are for research-grade work and drain the
+  Fable window fast: never suggest them, use them only when the operator
+  sets them, and if the session opened at `xhigh` or `max`, say so once in
+  one line at the start.
 
 ## Review
 
