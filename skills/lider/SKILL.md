@@ -71,8 +71,15 @@ basamak tercihi de uygulanır; bittiğinde bu dosyadaki düzene dönülür.
 Bu tablo Basamak 1 ve 2 içindir. Basamak 3'te Opus açılmaz: zor hat ve
 her kontrol Sonnet medium olur (bkz. Basamak).
 
+Liderin kendi eforu oturum ayarıdır (`/effort`), lider değiştiremez.
+Basamak 1'de Fable lider için beklenen `medium`, ağır planlamada `high`.
+`xhigh` ve `max` araştırma düzeyi iş içindir ve Fable penceresini çok
+hızlı doldurur: lider bunları önermez, yalnız Yusuf açarsa kullanılır.
+Oturum `xhigh` ya da `max` ile açılmışsa lider bunu oturum başında bir
+kez, tek satırla hatırlatır.
+
 - Her Agent ve Workflow `agent()` çağrısında `model` ve `effort` açık
-  yazılır (`"sonnet"` ya da `"opus"`). Yazılmazsa hat liderin modelini
+  yazılır (`"sonnet"`, `"opus"` ya da toplu temizlikte `"haiku"`). Yazılmazsa hat liderin modelini
   miras alır: Basamak 1'de Fable sessizce çoğalır, Basamak 2'de Sonnet'e
   gidecek iş Opus'ta koşar.
 - Fable alt ajan olarak açılmaz; Basamak 1'de lider tek Fable'dır, Basamak
@@ -80,13 +87,30 @@ her kontrol Sonnet medium olur (bkz. Basamak).
   belirli bir iş için Fable'ı açıkça adlandırırsa yalnız o iş için açılır;
   Fable penceresi eşiğin üstündeyse lider bunu açmadan önce tek satırla
   hatırlatır.
-- Haiku kullanılmaz: 12 Ekim 2026 ölçümünde Sonnet'e göre kazanç
-  göstermedi ve Yusuf'un kararı bu yönde.
+- Haiku (`model: "haiku"`, `effort: "medium"`) yalnız çok büyük toplu
+  temizlik içindir: binlerce satır ya da dosyada normalleştirme, tekrar
+  ayıklama, sınıflama, çıkarma. Küçük ve orta işte kullanılmaz: 12 Ekim
+  2026 ölçümünde iki küçük görevde Sonnet'e göre kazanç göstermedi (ikinci
+  görevde 145 sn'ye 17 sn), her alt ajanın ~50 bin tokenlik açılışı küçük
+  işte ucuz modelin avantajını yiyor. `low` efor kullanılmaz; Haiku
+  `low`'da uzun brief'te erken durur. Toplu işte henüz ölçülmedi: ilk
+  kullanımlarda `claude-limit` önce ve sonra koşar, bedel Last-Session
+  kartına bir satırla yazılır. Haiku brief'i için bkz. Brief şablonu.
 - Danışman (`/advisor`) varsayılan olarak kapalıdır. Alt ajan değildir ama
   her çağrıda bütün konuşmayı önbelleksiz okur ve Fable penceresinden
   harcar; yalnız Yusuf açarsa kullanılır.
+- İki hat arasında kararsız kalınırsa ucuz olan seçilir ve sonucu kontrol
+  edilir; başarısız olursa bir basamak yukarı çıkılır, baştan pahalıyla
+  başlanmaz.
 - Hat yanlış dönerse sıra: önce brief'i düzelt, sonra eforu yükselt, sonra
   modeli yükselt (Basamak 3'te Opus'a çıkılmaz).
+- Opus takılırsa: aynı iş, brief düzeltilip efor yükseltildikten sonra da
+  iki Opus turunda çözülmediyse üçüncü Opus turu açılmaz. Basamak 1'de
+  lider Yusuf'a tek satırla o iş için bir Fable hattı önerir ("Opus iki
+  turda çözemedi: X. Bu iş için Fable hattı açayım mı?"); Yusuf onaylarsa
+  yalnız o iş için açılır. Fable'ın farkı ana işte değil, Opus'un aynı
+  yerde döndüğü kenar durum ve hatalarda çıkar. Basamak 2 ve 3'te Fable
+  önerilmez; lider durumu raporlar ve Yusuf'a sorar.
 
 ## Döngü
 
@@ -96,7 +120,7 @@ her kontrol Sonnet medium olur (bkz. Basamak).
 3. **Planla.** Lider işi böler; her görev `model · efor → iş` olarak
    damgalanır. Ajan açılırken yönlendirme kararı kalmaz:
    `Sonnet low → envanter · Opus medium → auth hattı · Opus high → taze kontrol`
-4. **Uygula.** Her hat tam brief alır. Yazan her hat kendi dalında çalışır;
+4. **Uygula.** Her hat, şablondaki alanları eksiksiz bir brief alır. Yazan her hat kendi dalında çalışır;
    aynı repoda aynı anda yazan hatlar ayrı worktree'de çalışır. Bir hat
    yazarken o repoda dal değiştirilmez. Bağımsız hatlar aynı anda açılır.
 5. **Kontrol.** Kontrol her zaman uygulayandan ayrı, uygulama bağlamı
@@ -135,8 +159,29 @@ Hat konuşmayı görmez; brief tek başına anlaşılmalıdır. Zorunlu alanlar:
 - **Dönüş biçimi**: rapor şablonu.
 - **Worktree/dal**: yazan hatlarda zorunlu.
 
-Opus hattı tam spec alır: kesin dosyalar, kesin sözleşme, kesin kabul
-kontrolleri, dokunulmayacaklar. Opus yeniden tasarlamaz, spec'i uygular.
+Brief'in sıkılığı hatta ve işe göre değişir:
+
+- **Opus, yargı gerektiren iş** (hata ayıklama, araştırma, yolu açık çok
+  dosyalı uygulama): gevşek brief. Hedef ve neden önemli olduğu, hattın
+  kendi bulamayacağı bağlam, kısıtlar, bitti tanımı. Yol Opus'a bırakılır;
+  adım adım yazmak liderin tokenini yakar ve Opus'un yargısını boşa
+  çıkarır.
+- **Opus, sözleşmesi belli iş** (güvenlik, veri, göç, dışa açık arayüz,
+  biçimi kararlaştırılmış her şey): tam spec. Kesin dosyalar, kesin
+  sözleşme, kesin kabul kontrolleri, dokunulmayacaklar.
+- Opus her iki durumda da liderin koyduğu mimariyi ve sözleşmeyi yeniden
+  tasarlamaz; hattın içinde yolu kendisi seçer.
+- **Sonnet** (bir tık sıkı): dosyalar ya da alan, sıra önemliyse sıralı
+  adımlar, dönüş biçimi, dokunulmayacaklar. Bir ajana tek iş. Brief'e
+  uymayan ya da belirsiz bir şeyle karşılaşırsa doğaçlama yapmaz, durup
+  raporlar. Basamak 3'te zor işi taşıyan Sonnet medium hattı da bu
+  sıkılıkta brief alır.
+- **Haiku** (toplu temizlik): tek bir mekanik kural seti, kesin yazılmış,
+  iki üç giriş-çıkış örneğiyle. Veri, kötü çıkanı yeniden yapmak ucuz
+  olacak kadar küçük partilere bölünür; her parti kendi çıktı dosyasına
+  yazar. Birleştirmeden önce ayrı bir Sonnet low hattı her partiden örnek
+  alıp kurala uyuyor mu kontrol eder. Kuralın ne olacağına Haiku karar
+  vermez; kural lider tarafından önceden konur.
 
 Kontrol hattının brief'i farklıdır: yalnız spec ve değişikliğin yeri
 verilir, uygulayanın raporu ve iddiaları verilmez. "Üslubu atla; yalnız
