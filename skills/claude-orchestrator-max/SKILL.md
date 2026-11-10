@@ -1,18 +1,21 @@
 ---
 name: claude-orchestrator-max
-description: "Delegation policy for a Claude Max plan only (not Pro): Fable 5.1 runs the main loop and owns architecture, specs, briefs, integration and review; Opus 5.5 sub-agents carry the hard, precision lanes and fresh-eyes reviews; Sonnet 5.5 sub-agents gather context and carry simple bounded work. Fable is never spawned as a sub-agent. Load whenever spawning sub-agents (Agent tool or Workflow agent() calls) or planning any delegation. If the plan is unknown, load this one rather than claude-orchestrator: its first step checks the plan and hands off to claude-orchestrator when not on Max."
+description: "Delegation policy for a Claude Max plan only (not Pro): Fable runs the main loop and owns architecture, specs, briefs, integration and review; Opus 5.5 sub-agents carry the hard, precision lanes and fresh-eyes reviews; Sonnet 5.5 sub-agents gather context and carry simple bounded work. Fable is never spawned as a sub-agent. Load whenever spawning sub-agents (Agent tool or Workflow agent() calls) or planning any delegation. If the plan is unknown, load this one rather than claude-orchestrator: its first step checks the plan and hands off to claude-orchestrator when not on Max. Does not apply while the lider skill is active: lider is self-contained and replaces it."
 ---
 
 # Orchestration & delegation policy (Max plan, Fable in the main loop)
 
 A routing policy for one Claude **Max** plan with one scarce main-loop model
-and two delegate tiers: **Fable 5.1 in the main loop**, **Opus 5.5** for
+and two delegate tiers: **Fable in the main loop**, **Opus 5.5** for
 hard lanes and reviews, **Sonnet 5.5** for context gathering and simple
 execution.
 
 Core law: **the scarce model is never spawned as a sub-agent and never does
 throughput work.** Fable's tokens buy judgment: architecture, specs, briefs,
 integration, synthesis, acceptance. Everything mechanical goes down a tier.
+
+If the `lider` skill is active in this session, stop here and follow it
+instead: Lider is self-contained and this policy does not apply under it.
 
 ## Check the plan first
 
@@ -35,7 +38,10 @@ Its header shows the plan.
 
 1. **Never spawn Fable.** No Agent call or Workflow `agent()` with
    `model: "fable"`; the main loop is the only Fable. The one exception is
-   the operator naming Fable for a scoped task.
+   the operator naming Fable for a scoped task. The advisor (`/advisor`) is
+   not a sub-agent, but it rereads the whole conversation uncached on every
+   call and draws on the Fable window: off by default, on only when the
+   operator turns it on.
 2. **Always set `model` explicitly** (`"sonnet"` or `"opus"`) on every Agent
    call and every Workflow `agent()` call; `meta.phases` entries carry the
    same model for display. An omitted model inherits the main loop and
@@ -68,8 +74,10 @@ The routing axis is **difficulty**, not only recon versus execution.
   main loop; it does not redesign.
 - **Main loop (Fable)**: everything in rule 4, plus hard execution that
   needs the whole picture.
-- **Haiku**: not used. Two delegate tiers keep routing auditable; a Sonnet
-  lane at low effort covers the mechanical end.
+- **Haiku**: not used. Measured on 2026-10-12: no gain over Sonnet on two
+  tasks, slower on the second, quota difference not measurable; the
+  operator decided to keep two delegate tiers. A Sonnet lane at low effort
+  covers the mechanical end.
 
 Rule of thumb: **context gathering and simple execution → Sonnet; hard
 execution against a spec → Opus; judgment, spec-writing and synthesis → the
@@ -84,7 +92,10 @@ yourself. Every brief states:
 - the goal and what "done" looks like,
 - the files or places to start from,
 - the constraints that must hold and what is out of scope,
-- what to return, in what shape.
+- what to return, in what shape,
+- for any lane that edits files: "run a check that actually exercises the
+  change (test, build, the file on disk); if you could not run one, say
+  which and why". A low-effort lane may otherwise report done unverified.
 
 An Opus lane gets the complete spec: exact files, exact contract, exact
 acceptance checks, and what not to touch. When a lane comes back wrong: fix
@@ -97,7 +108,8 @@ or the operator asks for it; this policy is that instruction.
 
 - Sonnet mechanical lanes (inventory, sweeps, templated changes): `low`;
   `medium` when the lane has to make small judgment calls.
-- Opus hard lanes: `high`.
+- Opus hard lanes: `medium`. Independent tests found medium and high equal
+  on completion; high's gain is in subtle bugs, which the review catches.
 - Opus fresh-eyes review of risky work: `high`, regardless of the size of
   the diff.
 
@@ -107,7 +119,29 @@ or the operator asks for it; this policy is that instruction.
   not accept a lane's own claim of success.
 - Risky work (security, data, external integrations) gets an extra review by
   a fresh Opus sub-agent that did not carry the implementation context,
-  before the main loop's acceptance.
+  before the main loop's acceptance. Give the reviewer the spec and where
+  the change is, not the implementer's report: "skip style, report only
+  gaps that affect correctness, show the command you ran and its output".
+- Do not park a lane: a sub-agent's cache goes cold after five minutes, so
+  a lane left open for hours rewrites its whole context on every resume.
+  Have it write its state to a file and finish; start a new lane to resume.
+
+## Workflows and ultracode
+
+- Ultracode stays off as a session setting. When the operator puts
+  `ultracode` in a prompt or asks for a workflow, that one task runs as a
+  workflow. It fits audits, broad reviews, batch production and
+  multi-source research; it does not fit work that needs the operator's
+  decision midway, because the script cannot ask.
+- Every `agent()` call in the script names `model` and `effort` from this
+  policy (reading and sweeps Sonnet `low`, implementation Opus `medium`,
+  verification of risky findings Opus `high`). The Workflow reference says
+  to omit the model; under this policy, don't, or every agent is Fable.
+- If the script will run more than 10 agents, tell the operator the agent
+  count and models in one line first.
+- If ultracode is on for the whole session, say so once: every substantive
+  task becomes a workflow, effort rises, the large-workflow warning and the
+  concurrent sub-agent cap are lifted, and the limits fill sooner.
 
 ## Budget
 
@@ -126,7 +160,7 @@ or the operator asks for it; this policy is that instruction.
 When planning, stamp the model and effort on every task so spawning is
 mechanical and no routing decision happens at spawn time:
 
-`Sonnet low → inventory · Sonnet medium ×2 → A, B · Opus high → auth lane · Opus high → fresh-eyes review · main loop → spec, integration, acceptance`
+`Sonnet low → inventory · Sonnet medium ×2 → A, B · Opus medium → auth lane · Opus high → fresh-eyes review · main loop → spec, integration, acceptance`
 
 ## Exceptions
 

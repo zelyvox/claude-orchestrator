@@ -5,14 +5,14 @@
 Skills for running Claude Code on a single Claude subscription without wasting
 it. **Opus 5.5** in the main loop keeps judgment, specs and review;
 **Sonnet 5.5** sub-agents gather context and carry simple execution. On a Max
-plan, **Fable 5.1** takes the main loop and Opus moves down to the hard lanes
+plan, **Fable** takes the main loop and Opus moves down to the hard lanes
 and reviews.
 
 | Skill | Plan | What it does |
 |---|---|---|
 | [claude-orchestrator](skills/claude-orchestrator/SKILL.md) | Pro ($20) | Delegation policy for Opus + Sonnet: who gets which work. |
-| [claude-orchestrator-max](skills/claude-orchestrator-max/SKILL.md) | Max ($100) | Fable 5.1 in the main loop owns architecture, specs, briefs and acceptance; Opus 5.5 sub-agents carry the hard lanes and fresh-eyes reviews; Sonnet 5.5 gathers context and does simple bounded work. Effort per lane, and a budget rule for the Fable weekly window. |
-| [lider](skills/lider/SKILL.md) | Max ($100) | Turkish-language policy. Leader mode: the main-loop leader (Fable 5.1, or Opus/Sonnet when limits run low) does no work itself: it writes no files, runs no commands and reads no raw material; it writes briefs, hands the work to Sonnet/Opus lanes and accepts on their reports alone. A layer on top of claude-orchestrator-max. The ladder (basamak) picks the leader model from claude-limit at session start: Fable → Opus → Sonnet. |
+| [claude-orchestrator-max](skills/claude-orchestrator-max/SKILL.md) | Max ($100) | Fable in the main loop owns architecture, specs, briefs and acceptance; Opus 5.5 sub-agents carry the hard lanes (medium effort) and fresh-eyes reviews (high); Sonnet 5.5 gathers context and does simple bounded work. Effort per lane, a rule for workflows and ultracode, and a budget rule for the Fable weekly window. |
+| [lider](skills/lider/SKILL.md) | Max ($100) | Turkish-language policy. Leader mode: the main-loop leader (Fable, or Opus/Sonnet when limits run low) does no work itself: it writes no files, runs no commands and reads no raw material; it writes briefs, hands the work to Sonnet/Opus lanes and accepts on their reports alone. Self-contained: it carries its own model, effort, budget and ultracode rules and loads only claude-limit beside it. The ladder (basamak) picks the leader model from claude-limit at session start: Fable → Opus → Sonnet. |
 | [claude-limit](skills/claude-limit/SKILL.md) | any | Colored screen of the 5-hour and 7-day usage windows, plus model-scoped weekly windows such as Fable on Max, and what to do at each level. |
 
 Each policy is one Markdown file and loads only when sub-agents are spawned;
