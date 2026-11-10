@@ -20,11 +20,14 @@ brief, kabul. Geri kalan her şey hatta iner.
   `claude-orchestrator-max` okunmaz; Lider yüklüyken onun kuralları geçerli
   değildir, çünkü o skill ana döngünün iş yaptığı düzen içindir.
 - Plan Max değilse Lider uygulanmaz; `claude-orchestrator` izlenir.
-- `claude-limit`'in üç kuralı Lider modunda farklı işler:
-  - Komutu lider değil, Sonnet low hattı çalıştırır (bkz. Bütçe).
+- `claude-limit`'in şu kuralları Lider modunda farklı işler:
+  - Komutu lider değil, Sonnet low hattı çalıştırır ve çıktıyı birebir
+    göstermek yerine birkaç satırla raporlar (bkz. Bütçe).
   - "Pencere bilinmiyorsa dağıtım yok" kuralı Fable 7 günlük için
     uygulanmaz: Fable bilinmiyorsa Basamak 2 seçilir ve dağıtım sürer.
-    Ortak pencereler bilinmiyorsa kural geçerlidir.
+    Ortak pencereler ya da plan bilinmiyorsa tek izinli hat,
+    `claude-limit`'i yeniden koşturan Sonnet low hattıdır; yine
+    bilinmiyorsa başka hat açılmaz, Yusuf'a sorulur.
   - Haftalık duvarda "zorunlu işi ana döngüde tut" kuralı uygulanmaz: lider
     iş de yapmaz, dağıtım da yapmaz; Yusuf'a sorar.
 
@@ -32,6 +35,8 @@ brief, kabul. Geri kalan her şey hatta iner.
 
 Her kuralın tek istisnası aynıdır: Yusuf belirli bir iş için açıkça "sen
 yap" derse lider yalnız o işi kendisi yapar, sonra Lider moduna döner.
+Yusuf'un bir iş ya da oturum için açıkça söylediği model, efor ya da
+basamak tercihi de uygulanır; bittiğinde bu dosyadaki düzene dönülür.
 
 - Lider konuşur, soru sorar, karar verir, plan ve brief yazar (mesaj
   içinde), ajan raporlarını okur, raporla kabul eder. Kullandığı araçlar:
@@ -63,6 +68,9 @@ yap" derse lider yalnız o işi kendisi yapar, sonra Lider moduna döner.
 | Zor hat | Opus medium | Çok dosyalı uygulama, hata ayıklama, doğruluğun önemli olduğu her iş, güvenlik ve dış entegrasyon |
 | Taze kontrol | Opus high | Her Opus hattının ve riskli işin (güvenlik, veri, dış entegrasyon) kontrolü |
 
+Bu tablo Basamak 1 ve 2 içindir. Basamak 3'te Opus açılmaz: zor hat ve
+her kontrol Sonnet medium olur (bkz. Basamak).
+
 - Her Agent ve Workflow `agent()` çağrısında `model` ve `effort` açık
   yazılır (`"sonnet"` ya da `"opus"`). Yazılmazsa hat liderin modelini
   miras alır: Basamak 1'de Fable sessizce çoğalır, Basamak 2'de Sonnet'e
@@ -92,8 +100,9 @@ yap" derse lider yalnız o işi kendisi yapar, sonra Lider moduna döner.
    aynı repoda aynı anda yazan hatlar ayrı worktree'de çalışır. Bir hat
    yazarken o repoda dal değiştirilmez. Bağımsız hatlar aynı anda açılır.
 5. **Kontrol.** Kontrol her zaman uygulayandan ayrı, uygulama bağlamı
-   taşımayan taze bir ajandır; lider kendisi kontrol etmez. Model ve efor
-   yukarıdaki tablodan gelir. İnceleyen, kapsam içindeki bulguları (hattın
+   taşımayan taze bir ajandır; lider kendisi kontrol etmez. Dosya değiştiren
+   her hat kontrol alır; okuma, harita, durum komutu ve not yazma hatları
+   almaz. Model ve efor yukarıdaki tablodan gelir. İnceleyen, kapsam içindeki bulguları (hattın
    dosyaları ve spec'i içinde) **kendisi düzeltir** ve "düzeltildi" diye
    raporlar; tasarım veya spec sorununu yama yapmadan lidere karar olarak
    getirir. İnceleyen, hat bittikten sonra aynı worktree'de çalışır.
@@ -168,7 +177,8 @@ raporu en çok 1 sayfadır.
   ona soru soramaz.
 - Betikteki her `agent()` çağrısında `model` ve `effort` yazılır; tablo
   aynıdır (okuma ve tarama Sonnet low, uygulama Opus medium, riskli
-  bulgunun doğrulaması Opus high). Workflow başvurusu "modeli yazma, miras
+  bulgunun doğrulaması Opus high; Basamak 3'te hepsi Sonnet). Workflow
+  başvurusu "modeli yazma, miras
   alsın" der; Lider modunda yazılır, yoksa her ajan liderin modelinde
   koşar (Basamak 1'de Fable).
 - Betik 10 ajanı geçecekse lider önce Yusuf'a ajan sayısını ve modellerini
@@ -176,6 +186,8 @@ raporu en çok 1 sayfadır.
 - Oturumda ultracode ayarı açık görünüyorsa lider bunu Yusuf'a bir kez
   söyler: açıkken her ciddi iş workflow olur, efor yükselir, büyük
   workflow uyarısı ve eşzamanlı ajan sınırı kalkar, limit daha çabuk dolar.
+  Yusuf kapatmazsa o oturumda ultracode düzeni geçerlidir; model damgası ve
+  10 ajan kuralı aynen sürer.
 - Büyük bir workflow'dan önce ve sonra `claude-limit` koşar; bedeli
   Last-Session kartına bir satırla yazılır.
 
@@ -201,8 +213,9 @@ Seçim kuralları:
 - En dolu geçerli pencere bağlayıcıdır. Sıra: plan Max değilse Lider
   uygulanmaz; ortak 7 günlük pencere duvara ~5 puan kalaysa Basamak 3;
   Fable 7 günlük ≥ %85 ya da bilinmiyorsa Basamak 2; aksi halde Basamak 1.
-- Yusuf oturumu bilerek Opus'la açtıysa (Fable penceresi eşiğin altında
-  olsa bile) Basamak 2 geçerlidir; lider Fable'a geçmeyi önermez.
+- Yusuf oturumu bilerek Opus ya da Sonnet ile açtıysa (pencereler daha
+  üst basamağa izin verse bile) o modelin basamağı geçerlidir; lider üst
+  modele geçmeyi önermez.
 - Basamak 2'de lider de zor hatlar da ortak pencereden harcar; ortak 7
   günlük pencere Basamak 1'e göre daha hızlı dolar. Büyük dağıtım öncesi
   `claude-limit` bu yüzden yeniden koşar.

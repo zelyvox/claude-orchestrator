@@ -15,8 +15,9 @@ and reviews.
 | [lider](skills/lider/SKILL.md) | Max ($100) | Turkish-language policy. Leader mode: the main-loop leader (Fable, or Opus/Sonnet when limits run low) does no work itself: it writes no files, runs no commands and reads no raw material; it writes briefs, hands the work to Sonnet/Opus lanes and accepts on their reports alone. Self-contained: it carries its own model, effort, budget and ultracode rules and loads only claude-limit beside it. The ladder (basamak) picks the leader model from claude-limit at session start: Fable → Opus → Sonnet. |
 | [claude-limit](skills/claude-limit/SKILL.md) | any | Colored screen of the 5-hour and 7-day usage windows, plus model-scoped weekly windows such as Fable on Max, and what to do at each level. |
 
-Each policy is one Markdown file and loads only when sub-agents are spawned;
-the rest of the time only its one-line description is in context.
+Each policy is one Markdown file. The two orchestrator policies load only
+when sub-agents are spawned, and `lider` loads when you ask for it; the rest
+of the time only a one-line description is in context.
 
 ## Install
 

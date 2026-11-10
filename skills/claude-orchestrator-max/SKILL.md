@@ -110,15 +110,15 @@ or the operator asks for it; this policy is that instruction.
   `medium` when the lane has to make small judgment calls.
 - Opus hard lanes: `medium`. Independent tests found medium and high equal
   on completion; high's gain is in subtle bugs, which the review catches.
-- Opus fresh-eyes review of risky work: `high`, regardless of the size of
-  the diff.
+- Opus fresh-eyes review (every Opus lane and any risky work): `high`,
+  regardless of the size of the diff.
 
 ## Review
 
 - The main loop reviews every delegated result before accepting it; it does
   not accept a lane's own claim of success.
-- Risky work (security, data, external integrations) gets an extra review by
-  a fresh Opus sub-agent that did not carry the implementation context,
+- Every Opus lane that edits files, and any risky work (security, data,
+  external integrations), gets an extra review by a fresh Opus sub-agent that did not carry the implementation context,
   before the main loop's acceptance. Give the reviewer the spec and where
   the change is, not the implementer's report: "skip style, report only
   gaps that affect correctness, show the command you ran and its output".
