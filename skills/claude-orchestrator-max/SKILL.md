@@ -1,6 +1,6 @@
 ---
 name: claude-orchestrator-max
-description: "Delegation policy for a Claude Max plan only (not Pro): Fable runs the main loop and owns architecture, specs, briefs, integration and review; Opus 5.5 sub-agents carry the hard, precision lanes and fresh-eyes reviews; Sonnet 5.5 sub-agents gather context and carry simple bounded work. Fable is never spawned as a sub-agent. Load whenever spawning sub-agents (Agent tool or Workflow agent() calls) or planning any delegation. If the plan is unknown, load this one rather than claude-orchestrator: its first step checks the plan and hands off to claude-orchestrator when not on Max. Does not apply while the lider skill is active: lider is self-contained and replaces it."
+description: "Delegation policy for a Claude Max plan only (not Pro): Fable runs the main loop and owns architecture, specs, briefs, integration and review; Opus 5.5 sub-agents carry the hard, precision lanes and fresh-eyes reviews; Sonnet 5.5 sub-agents gather context and carry simple bounded work; Haiku 5.5 only for very large data cleanup. Fable is never spawned as a sub-agent. Load whenever spawning sub-agents (Agent tool or Workflow agent() calls) or planning any delegation. If the plan is unknown, load this one rather than claude-orchestrator: its first step checks the plan and hands off to claude-orchestrator when not on Max. Does not apply while the lider skill is active: lider is self-contained and replaces it."
 ---
 
 # Orchestration & delegation policy (Max plan, Fable in the main loop)
@@ -42,7 +42,7 @@ Its header shows the plan.
    not a sub-agent, but it rereads the whole conversation uncached on every
    call and draws on the Fable window: off by default, on only when the
    operator turns it on.
-2. **Always set `model` explicitly** (`"sonnet"` or `"opus"`) on every Agent
+2. **Always set `model` explicitly** (`"sonnet"`, `"opus"`, or `"haiku"` for bulk cleanup) on every Agent
    call and every Workflow `agent()` call; `meta.phases` entries carry the
    same model for display. An omitted model inherits the main loop and
    silently fans out Fable. The Workflow reference says to omit it by
@@ -75,10 +75,15 @@ The routing axis is **difficulty**, not only recon versus execution.
   or the contract the main loop set. It is not a second main loop.
 - **Main loop (Fable)**: everything in rule 4, plus hard execution that
   needs the whole picture.
-- **Haiku**: not used. Measured on 2026-10-12: no gain over Sonnet on two
-  tasks, slower on the second, quota difference not measurable; the
-  operator decided to keep two delegate tiers. A Sonnet lane at low effort
-  covers the mechanical end.
+- **Haiku (`model: "haiku"`, effort `medium`), only for very large data
+  cleanup**: thousands of rows or files to normalize, deduplicate,
+  classify or extract. Not for small or medium lanes: measured on
+  2026-10-12, no gain over Sonnet on two small tasks and much slower on
+  the second; the ~50k-token spawn cost per sub-agent eats a cheap model's
+  advantage on small work, and a Sonnet lane at low effort covers the
+  mechanical end there. No `low` effort: Haiku stops early at `low` with a
+  long brief. Bulk use is not measured yet: run `claude-limit` before and
+  after the first runs and note the cost.
 
 Rule of thumb: **context gathering and simple execution → Sonnet; hard
 execution → Opus; judgment, spec-writing and synthesis → the main loop.**
@@ -114,6 +119,11 @@ How tight to write depends on who reads it and what the work is:
   order when order matters, give the output format and what not to touch.
   One task per agent. When something is unclear or does not match the
   brief, stop and report instead of improvising.
+- **Haiku** (bulk cleanup): one mechanical rule set, stated exactly, with
+  two or three input and output examples. Split the data into batches
+  small enough that a bad batch is cheap to redo, have each batch write to
+  its own output file, and sample every batch before merging. Never ask
+  this tier to decide what the rules should be.
 
 When a lane comes back wrong: fix the brief, then raise the effort, then
 raise the model, in that order.

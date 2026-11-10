@@ -72,7 +72,7 @@ Bu tablo Basamak 1 ve 2 içindir. Basamak 3'te Opus açılmaz: zor hat ve
 her kontrol Sonnet medium olur (bkz. Basamak).
 
 - Her Agent ve Workflow `agent()` çağrısında `model` ve `effort` açık
-  yazılır (`"sonnet"` ya da `"opus"`). Yazılmazsa hat liderin modelini
+  yazılır (`"sonnet"`, `"opus"` ya da toplu temizlikte `"haiku"`). Yazılmazsa hat liderin modelini
   miras alır: Basamak 1'de Fable sessizce çoğalır, Basamak 2'de Sonnet'e
   gidecek iş Opus'ta koşar.
 - Fable alt ajan olarak açılmaz; Basamak 1'de lider tek Fable'dır, Basamak
@@ -80,8 +80,15 @@ her kontrol Sonnet medium olur (bkz. Basamak).
   belirli bir iş için Fable'ı açıkça adlandırırsa yalnız o iş için açılır;
   Fable penceresi eşiğin üstündeyse lider bunu açmadan önce tek satırla
   hatırlatır.
-- Haiku kullanılmaz: 12 Ekim 2026 ölçümünde Sonnet'e göre kazanç
-  göstermedi ve Yusuf'un kararı bu yönde.
+- Haiku (`model: "haiku"`, `effort: "medium"`) yalnız çok büyük toplu
+  temizlik içindir: binlerce satır ya da dosyada normalleştirme, tekrar
+  ayıklama, sınıflama, çıkarma. Küçük ve orta işte kullanılmaz: 12 Ekim
+  2026 ölçümünde iki küçük görevde Sonnet'e göre kazanç göstermedi (ikinci
+  görevde 145 sn'ye 17 sn), her alt ajanın ~50 bin tokenlik açılışı küçük
+  işte ucuz modelin avantajını yiyor. `low` efor kullanılmaz; Haiku
+  `low`'da uzun brief'te erken durur. Toplu işte henüz ölçülmedi: ilk
+  kullanımlarda `claude-limit` önce ve sonra koşar, bedel Last-Session
+  kartına bir satırla yazılır. Haiku brief'i için bkz. Brief şablonu.
 - Danışman (`/advisor`) varsayılan olarak kapalıdır. Alt ajan değildir ama
   her çağrıda bütün konuşmayı önbelleksiz okur ve Fable penceresinden
   harcar; yalnız Yusuf açarsa kullanılır.
@@ -155,6 +162,12 @@ Brief'in sıkılığı hatta ve işe göre değişir:
   uymayan ya da belirsiz bir şeyle karşılaşırsa doğaçlama yapmaz, durup
   raporlar. Basamak 3'te zor işi taşıyan Sonnet medium hattı da bu
   sıkılıkta brief alır.
+- **Haiku** (toplu temizlik): tek bir mekanik kural seti, kesin yazılmış,
+  iki üç giriş-çıkış örneğiyle. Veri, kötü çıkanı yeniden yapmak ucuz
+  olacak kadar küçük partilere bölünür; her parti kendi çıktı dosyasına
+  yazar. Birleştirmeden önce ayrı bir Sonnet low hattı her partiden örnek
+  alıp kurala uyuyor mu kontrol eder. Kuralın ne olacağına Haiku karar
+  vermez; kural lider tarafından önceden konur.
 
 Kontrol hattının brief'i farklıdır: yalnız spec ve değişikliğin yeri
 verilir, uygulayanın raporu ve iddiaları verilmez. "Üslubu atla; yalnız
