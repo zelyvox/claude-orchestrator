@@ -54,8 +54,9 @@ Its header shows the plan.
    contract-sensitive design, subtle state machines, integration, conflict
    resolution, final synthesis, judgment calls and acceptance stay in the
    main loop.
-5. **The main loop writes the brief.** Sub-agents receive a spec written by
-   Fable, not a goal to interpret. See "The brief is the ceiling".
+5. **The main loop writes the brief.** Every sub-agent gets a brief written
+   by Fable; how tight it is depends on the tier and the work. See "The
+   brief is the ceiling".
 
 ## Choosing the delegate
 
@@ -66,12 +67,12 @@ The routing axis is **difficulty**, not only recon versus execution.
   existing pattern, features that ride an existing pipeline end to end.
   Sonnet copes with a looser brief when the deliverable is understanding,
   not a diff.
-- **Opus, for the hard and precision lanes**: correctness-sensitive paths,
+- **Opus, for the hard and precision lanes**: multi-file implementation,
+  real debugging, research that needs judgment, correctness-sensitive paths,
   security-critical strengthen-never-relax changes, the largest surfaces,
-  migrations and refactors against a complete spec, and the fresh-eyes
-  review of risky work. Opus is a strong instruction follower: give it a
-  complete, explicit spec and it executes it precisely. It is not a second
-  main loop; it does not redesign.
+  migrations and refactors, and the fresh-eyes review of risky work. Opus
+  chooses the route inside its lane; it does not redesign the architecture
+  or the contract the main loop set. It is not a second main loop.
 - **Main loop (Fable)**: everything in rule 4, plus hard execution that
   needs the whole picture.
 - **Haiku**: not used. Measured on 2026-10-12: no gain over Sonnet on two
@@ -80,8 +81,10 @@ The routing axis is **difficulty**, not only recon versus execution.
   covers the mechanical end.
 
 Rule of thumb: **context gathering and simple execution → Sonnet; hard
-execution against a spec → Opus; judgment, spec-writing and synthesis → the
-main loop.**
+execution → Opus; judgment, spec-writing and synthesis → the main loop.**
+
+When unsure between two tiers, take the cheaper one and verify the result;
+escalate one tier on failure rather than starting high.
 
 ## The brief is the ceiling
 
@@ -97,9 +100,23 @@ yourself. Every brief states:
   change (test, build, the file on disk); if you could not run one, say
   which and why". A low-effort lane may otherwise report done unverified.
 
-An Opus lane gets the complete spec: exact files, exact contract, exact
-acceptance checks, and what not to touch. When a lane comes back wrong: fix
-the brief, then raise the effort, then raise the model, in that order.
+How tight to write depends on who reads it and what the work is:
+
+- **Opus, judgment work** (debugging, research, multi-file implementation
+  where the route is open): fairly loose. The goal and why it matters, the
+  context it cannot discover on its own, the constraints, and what done
+  looks like. Leave the route to it; over-specifying costs main-loop tokens
+  and removes the judgment the Opus lane is paid for.
+- **Opus, contract work** (security, data, migrations, a public interface,
+  anything where the shape is already decided): the complete spec. Exact
+  files, exact contract, exact acceptance checks, and what not to touch.
+- **Sonnet** (a notch tighter): name the files or area, list the steps in
+  order when order matters, give the output format and what not to touch.
+  One task per agent. When something is unclear or does not match the
+  brief, stop and report instead of improvising.
+
+When a lane comes back wrong: fix the brief, then raise the effort, then
+raise the model, in that order.
 
 ## Effort
 

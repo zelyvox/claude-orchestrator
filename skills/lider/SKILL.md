@@ -85,6 +85,9 @@ her kontrol Sonnet medium olur (bkz. Basamak).
 - Danışman (`/advisor`) varsayılan olarak kapalıdır. Alt ajan değildir ama
   her çağrıda bütün konuşmayı önbelleksiz okur ve Fable penceresinden
   harcar; yalnız Yusuf açarsa kullanılır.
+- İki hat arasında kararsız kalınırsa ucuz olan seçilir ve sonucu kontrol
+  edilir; başarısız olursa bir basamak yukarı çıkılır, baştan pahalıyla
+  başlanmaz.
 - Hat yanlış dönerse sıra: önce brief'i düzelt, sonra eforu yükselt, sonra
   modeli yükselt (Basamak 3'te Opus'a çıkılmaz).
 
@@ -96,7 +99,7 @@ her kontrol Sonnet medium olur (bkz. Basamak).
 3. **Planla.** Lider işi böler; her görev `model · efor → iş` olarak
    damgalanır. Ajan açılırken yönlendirme kararı kalmaz:
    `Sonnet low → envanter · Opus medium → auth hattı · Opus high → taze kontrol`
-4. **Uygula.** Her hat tam brief alır. Yazan her hat kendi dalında çalışır;
+4. **Uygula.** Her hat, şablondaki alanları eksiksiz bir brief alır. Yazan her hat kendi dalında çalışır;
    aynı repoda aynı anda yazan hatlar ayrı worktree'de çalışır. Bir hat
    yazarken o repoda dal değiştirilmez. Bağımsız hatlar aynı anda açılır.
 5. **Kontrol.** Kontrol her zaman uygulayandan ayrı, uygulama bağlamı
@@ -135,8 +138,23 @@ Hat konuşmayı görmez; brief tek başına anlaşılmalıdır. Zorunlu alanlar:
 - **Dönüş biçimi**: rapor şablonu.
 - **Worktree/dal**: yazan hatlarda zorunlu.
 
-Opus hattı tam spec alır: kesin dosyalar, kesin sözleşme, kesin kabul
-kontrolleri, dokunulmayacaklar. Opus yeniden tasarlamaz, spec'i uygular.
+Brief'in sıkılığı hatta ve işe göre değişir:
+
+- **Opus, yargı gerektiren iş** (hata ayıklama, araştırma, yolu açık çok
+  dosyalı uygulama): gevşek brief. Hedef ve neden önemli olduğu, hattın
+  kendi bulamayacağı bağlam, kısıtlar, bitti tanımı. Yol Opus'a bırakılır;
+  adım adım yazmak liderin tokenini yakar ve Opus'un yargısını boşa
+  çıkarır.
+- **Opus, sözleşmesi belli iş** (güvenlik, veri, göç, dışa açık arayüz,
+  biçimi kararlaştırılmış her şey): tam spec. Kesin dosyalar, kesin
+  sözleşme, kesin kabul kontrolleri, dokunulmayacaklar.
+- Opus her iki durumda da liderin koyduğu mimariyi ve sözleşmeyi yeniden
+  tasarlamaz; hattın içinde yolu kendisi seçer.
+- **Sonnet** (bir tık sıkı): dosyalar ya da alan, sıra önemliyse sıralı
+  adımlar, dönüş biçimi, dokunulmayacaklar. Bir ajana tek iş. Brief'e
+  uymayan ya da belirsiz bir şeyle karşılaşırsa doğaçlama yapmaz, durup
+  raporlar. Basamak 3'te zor işi taşıyan Sonnet medium hattı da bu
+  sıkılıkta brief alır.
 
 Kontrol hattının brief'i farklıdır: yalnız spec ve değişikliğin yeri
 verilir, uygulayanın raporu ve iddiaları verilmez. "Üslubu atla; yalnız
