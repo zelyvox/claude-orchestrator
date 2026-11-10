@@ -65,9 +65,13 @@ yap" derse lider yalnız o işi kendisi yapar, sonra Lider moduna döner.
 
 - Her Agent ve Workflow `agent()` çağrısında `model` ve `effort` açık
   yazılır (`"sonnet"` ya da `"opus"`). Yazılmazsa hat liderin modelini
-  miras alır ve Fable sessizce çoğalır.
-- Fable alt ajan olarak açılmaz; lider tek Fable'dır. Tek istisna: Yusuf
-  belirli bir iş için Fable'ı açıkça adlandırırsa yalnız o iş için açılır.
+  miras alır: Basamak 1'de Fable sessizce çoğalır, Basamak 2'de Sonnet'e
+  gidecek iş Opus'ta koşar.
+- Fable alt ajan olarak açılmaz; Basamak 1'de lider tek Fable'dır, Basamak
+  2 ve 3'te Fable hiç yoktur (danışman olarak da). Tek istisna: Yusuf
+  belirli bir iş için Fable'ı açıkça adlandırırsa yalnız o iş için açılır;
+  Fable penceresi eşiğin üstündeyse lider bunu açmadan önce tek satırla
+  hatırlatır.
 - Haiku kullanılmaz: 12 Ekim 2026 ölçümünde Sonnet'e göre kazanç
   göstermedi ve Yusuf'un kararı bu yönde.
 - Danışman (`/advisor`) varsayılan olarak kapalıdır. Alt ajan değildir ama
@@ -165,7 +169,8 @@ raporu en çok 1 sayfadır.
 - Betikteki her `agent()` çağrısında `model` ve `effort` yazılır; tablo
   aynıdır (okuma ve tarama Sonnet low, uygulama Opus medium, riskli
   bulgunun doğrulaması Opus high). Workflow başvurusu "modeli yazma, miras
-  alsın" der; Lider modunda yazılır, yoksa her ajan Fable olur.
+  alsın" der; Lider modunda yazılır, yoksa her ajan liderin modelinde
+  koşar (Basamak 1'de Fable).
 - Betik 10 ajanı geçecekse lider önce Yusuf'a ajan sayısını ve modellerini
   tek satırla söyler.
 - Oturumda ultracode ayarı açık görünüyorsa lider bunu Yusuf'a bir kez
@@ -196,6 +201,11 @@ Seçim kuralları:
 - En dolu geçerli pencere bağlayıcıdır. Sıra: plan Max değilse Lider
   uygulanmaz; ortak 7 günlük pencere duvara ~5 puan kalaysa Basamak 3;
   Fable 7 günlük ≥ %85 ya da bilinmiyorsa Basamak 2; aksi halde Basamak 1.
+- Yusuf oturumu bilerek Opus'la açtıysa (Fable penceresi eşiğin altında
+  olsa bile) Basamak 2 geçerlidir; lider Fable'a geçmeyi önermez.
+- Basamak 2'de lider de zor hatlar da ortak pencereden harcar; ortak 7
+  günlük pencere Basamak 1'e göre daha hızlı dolar. Büyük dağıtım öncesi
+  `claude-limit` bu yüzden yeniden koşar.
 - 5 saatlik pencere basamak seçmez: doluysa `claude-limit` tablosu geçerlidir
   (daralt, bekle ya da dur); lider yine iş yapmaz.
 - Devir otomatiktir, çünkü eşik Yusuf'un kalıcı kararıdır. Eşik geçildiği
