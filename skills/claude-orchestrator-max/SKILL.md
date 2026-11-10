@@ -149,11 +149,12 @@ or the operator asks for it; this policy is that instruction.
 - The 5-hour and 7-day rules in `claude-limit` apply to every model.
 - `Fable 7-day` comes only from the live endpoint. If it is unknown, say so
   to the operator; don't guess.
-- At 75% of `Fable 7-day`, tell the operator and keep main-loop reading
-  light (Sonnet maps, Fable reads the map). At 90%, stop and tell the
-  operator; the fallback is `/model opus`, after which the same delegation
-  rules apply with Opus as the main loop and Fable out of the stack until
-  the window resets. Never switch silently.
+- At 85% of `Fable 7-day`, hand the main loop to Opus: tell the operator
+  in one line and ask for `/model opus`, and start no new lane until it
+  arrives. The same delegation rules then apply with Opus as the main loop
+  and Fable out of the stack until the window resets. Never switch
+  silently. The threshold is the operator's standing decision and matches
+  the lider skill.
 
 ## Planning
 
