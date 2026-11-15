@@ -1,6 +1,6 @@
 ---
 name: claude-orchestrator
-description: "Delegation policy for a Claude Pro plan only (not Max, no Fable): Opus 5.5 runs the main loop and owns architecture, specs, briefs, integration and review; Sonnet 5.5 sub-agents gather context and carry simple bounded work; Opus 5.5 sub-agents only for hard lanes that must run in parallel or would flood the main context, and for fresh-eyes reviews; Haiku 5.5 only for very large data cleanup. Load whenever spawning sub-agents (Agent tool or Workflow agent() calls) or planning any delegation. On a Max plan use claude-orchestrator-max instead."
+description: "Delegation policy for a Claude Pro plan only (not Max, no Fable): Opus 5.5 runs the main loop and owns architecture, specs, briefs, integration and review; Sonnet 5.5 sub-agents gather context and carry simple bounded work; Opus 5.5 sub-agents only for hard lanes that must run in parallel or would flood the main context, and for fresh-eyes reviews; Haiku 5.5 only for very large data cleanup. Load whenever spawning sub-agents (Agent tool or Workflow agent() calls) or planning any delegation."
 ---
 
 # Orchestration & delegation policy (Pro plan, Opus in the main loop)
@@ -15,14 +15,6 @@ so Opus is the scarce tier.
 
 Core law: **Opus tokens buy judgment, not throughput.** The main loop does
 the work it can carry itself; everything mechanical goes down a tier.
-
-## Check the plan first
-
-Run the `claude-limit` skill once per session, before the first delegation.
-Its header shows the plan.
-
-- Pro (anything but `max`) → this policy applies.
-- `plan: max` → stop using this skill and follow `claude-orchestrator-max`.
 
 ## The hard rules
 
@@ -167,8 +159,10 @@ so write it on every call.
 
 ## Budget
 
-- Run `claude-limit` once per session; re-run it before a large fan-out.
-  Its decision table applies to every model.
+- Run `claude-limit` once per session, before the first delegation, for
+  the limits; re-run it before a large fan-out. Its decision table applies
+  to every model. The operator chooses which policy to load; do not use the
+  plan line to switch policies.
 - There is no model-scoped weekly window on Pro: the 5-hour and 7-day
   windows bind every model alike, and Opus fills them fastest.
 - When the binding window gets tight, cut Opus first: open no new Opus
