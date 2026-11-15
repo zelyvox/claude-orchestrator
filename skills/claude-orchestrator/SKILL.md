@@ -130,12 +130,15 @@ so write it on every call.
 
 - The main loop reviews every delegated result before accepting it; it does
   not accept a lane's own claim of success.
-- Every Opus sub-agent lane that edits files, and any risky work (security,
-  data, external integrations), gets an extra review by a fresh Opus
-  sub-agent that did not carry the implementation context, before the main
-  loop's acceptance. Give the reviewer the spec and where the change is,
-  not the implementer's report: "skip style, report only gaps that affect
-  correctness, show the command you ran and its output".
+- For a lane that is not risky, the main loop's own review is the whole
+  review, Opus sub-agent lanes included. A second Opus pass on every lane
+  costs more than the Pro pool can carry.
+- Only risky work (security, data, external integrations) gets an extra
+  review by a fresh Opus sub-agent that did not carry the implementation
+  context, before the main loop's acceptance. Give the reviewer the spec
+  and where the change is, not the implementer's report: "skip style,
+  report only gaps that affect correctness, show the command you ran and
+  its output".
 - No second-opinion lanes: on a genuinely hard call with real ambiguity,
   ask the operator.
 - Do not park a lane: a sub-agent's cache goes cold after five minutes, so
@@ -165,10 +168,12 @@ so write it on every call.
   plan line to switch policies.
 - There is no model-scoped weekly window on Pro: the 5-hour and 7-day
   windows bind every model alike, and Opus fills them fastest.
-- When the binding window gets tight, cut Opus first: open no new Opus
-  sub-agent and keep only essential work in the main loop. If the main
-  loop itself has to keep going on a tight window, tell the operator in one
-  line and ask for `/model sonnet`; never switch silently.
+- At 70% of the binding window (5-hour or 7-day, whichever is fuller), cut
+  Opus first: open no new Opus sub-agent and keep only essential work in
+  the main loop. If the main loop itself has to keep going past that, tell
+  the operator in one line and ask for `/model sonnet`; never switch
+  silently. The `claude-limit` rules for a window near or at its wall still
+  apply on top of this.
 
 ## Planning
 
