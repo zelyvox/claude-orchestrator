@@ -168,7 +168,7 @@ so write it on every call.
   plan line to switch policies.
 - There is no model-scoped weekly window on Pro: the 5-hour and 7-day
   windows bind every model alike, and Opus fills them fastest.
-- At 70% of the binding window (5-hour or 7-day, whichever is fuller), cut
+- At 80% of the binding window (5-hour or 7-day, whichever is fuller), cut
   Opus first: open no new Opus sub-agent and keep only essential work in
   the main loop. If the main loop itself has to keep going past that, tell
   the operator in one line and ask for `/model sonnet`; never switch
