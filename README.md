@@ -10,7 +10,7 @@ and reviews.
 
 | Skill | Plan | What it does |
 |---|---|---|
-| [claude-orchestrator](skills/claude-orchestrator/SKILL.md) | Pro ($20) | Delegation policy for Opus + Sonnet: who gets which work. |
+| [claude-orchestrator](skills/claude-orchestrator/SKILL.md) | Pro ($20) | Opus 5.5 in the main loop does the hard work and owns specs, briefs and acceptance; Sonnet 5.5 gathers context and does simple bounded work (low or medium effort per lane); Opus sub-agents only for hard parallel lanes (medium, high for security) and fresh-eyes reviews (high); Haiku 5.5 only for very large data cleanup. Same brief, review, workflow and budget rules as the Max policy, sized for the smaller pool. |
 | [claude-orchestrator-max](skills/claude-orchestrator-max/SKILL.md) | Max ($100) | Fable in the main loop owns architecture, specs, briefs and acceptance; Opus 5.5 sub-agents carry the hard lanes (medium effort) and fresh-eyes reviews (high); Sonnet 5.5 gathers context and does simple bounded work. Effort per lane, a rule for workflows and ultracode, and a budget rule for the Fable weekly window. |
 | [lider](skills/lider/SKILL.md) | Max ($100) | Turkish-language policy. Leader mode: the main-loop leader (Fable, or Opus/Sonnet when limits run low) does no work itself: it writes no files, runs no commands and reads no raw material; it writes briefs, hands the work to Sonnet/Opus lanes and accepts on their reports alone. Self-contained: it carries its own model, effort, budget and ultracode rules and loads only claude-limit beside it. The ladder (basamak) picks the leader model from claude-limit at session start: Fable → Opus → Sonnet. |
 | [claude-limit](skills/claude-limit/SKILL.md) | any | Colored screen of the 5-hour and 7-day usage windows, plus model-scoped weekly windows such as Fable on Max, and what to do at each level. |
@@ -39,12 +39,17 @@ PowerShell: `Copy-Item -Recurse -Force skills/<policy>, skills/claude-limit ~/.c
 (Max: `Copy-Item -Recurse -Force skills/claude-orchestrator-max, skills/lider, skills/claude-limit ~/.claude/skills/`)
 
 If you switch between a Pro and a Max account, install both policies. Each
-description names its plan, and the Max policy checks the plan through
-`claude-limit` and hands over to the Pro one when it is not on Max.
+description names its plan; the operator loads the one that fits the
+account. `claude-limit` is used for the limits only, not to switch policies.
 
 `claude-limit` needs Python 3.11+ (standard library only).
 
 ## Does it work? What we measured (Pro policy)
+
+These runs used the first version of the Pro policy (October 2026). The
+core rule they test, an explicit `model` on every sub-agent, is unchanged in
+the current version; the later additions (effort per lane, brief rules,
+budget) are not measured yet.
 
 Short answer: **when Claude Code delegates work to sub-agents, this skill
 roughly halved the cost of the same job, with the same quality.** It does not
