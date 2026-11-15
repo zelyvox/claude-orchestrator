@@ -33,11 +33,11 @@ instead: Lider is self-contained and this policy does not apply under it.
    not a sub-agent, but it rereads the whole conversation uncached on every
    call and draws on the Fable window: off by default, on only when the
    operator turns it on.
-2. **Always set `model` explicitly** (`"sonnet"`, `"opus"`, or `"haiku"` for bulk cleanup) on every Agent
-   call and every Workflow `agent()` call; `meta.phases` entries carry the
-   same model for display. An omitted model inherits the main loop and
-   silently fans out Fable. The Workflow reference says to omit it by
-   default; under this policy, don't.
+2. **Always set `model` explicitly** (`"sonnet"`, `"opus"`, or `"haiku"`
+   for bulk cleanup) on every Agent call and every Workflow `agent()` call;
+   `meta.phases` entries carry the same model for display. An omitted model
+   inherits the main loop and silently fans out Fable. The Workflow
+   reference says to omit it by default; under this policy, don't.
 3. **Hands-on while limits are healthy.** The main loop does small and
    medium work itself; delegation has its own overhead. Delegate work that is
    parallelizable, large and mechanical, or would flood the main context.
@@ -149,10 +149,11 @@ or the operator asks for it; this policy is that instruction.
 - The main loop reviews every delegated result before accepting it; it does
   not accept a lane's own claim of success.
 - Every Opus lane that edits files, and any risky work (security, data,
-  external integrations), gets an extra review by a fresh Opus sub-agent that did not carry the implementation context,
-  before the main loop's acceptance. Give the reviewer the spec and where
-  the change is, not the implementer's report: "skip style, report only
-  gaps that affect correctness, show the command you ran and its output".
+  external integrations), gets an extra review by a fresh Opus sub-agent
+  that did not carry the implementation context, before the main loop's
+  acceptance. Give the reviewer the spec and where the change is, not the
+  implementer's report: "skip style, report only gaps that affect
+  correctness, show the command you ran and its output".
 - Do not park a lane: a sub-agent's cache goes cold after five minutes, so
   a lane left open for hours rewrites its whole context on every resume.
   Have it write its state to a file and finish; start a new lane to resume.

@@ -19,13 +19,14 @@ brief, kabul. Geri kalan her şey hatta iner.
 - Bu dosya kendi kendine yeter. Yanında yalnız `claude-limit` okunur.
   `claude-orchestrator-max` okunmaz; Lider yüklüyken onun kuralları geçerli
   değildir, çünkü o skill ana döngünün iş yaptığı düzen içindir.
-- Plan Max değilse Lider uygulanmaz; `claude-orchestrator` izlenir.
+- Hangi skill'in yükleneceğini Yusuf seçer. `claude-limit` yalnız limit
+  içindir; plan satırına bakıp skill değiştirilmez.
 - `claude-limit`'in şu kuralları Lider modunda farklı işler:
   - Komutu lider değil, Sonnet low hattı çalıştırır ve çıktıyı birebir
     göstermek yerine birkaç satırla raporlar (bkz. Bütçe).
   - "Pencere bilinmiyorsa dağıtım yok" kuralı Fable 7 günlük için
     uygulanmaz: Fable bilinmiyorsa Basamak 2 seçilir ve dağıtım sürer.
-    Ortak pencereler ya da plan bilinmiyorsa tek izinli hat,
+    Ortak pencereler bilinmiyorsa tek izinli hat,
     `claude-limit`'i yeniden koşturan Sonnet low hattıdır; yine
     bilinmiyorsa başka hat açılmaz, Yusuf'a sorulur.
   - Haftalık duvarda "zorunlu işi ana döngüde tut" kuralı uygulanmaz: lider
@@ -255,8 +256,8 @@ Seçim kuralları:
 - Basamak oturum başında seçilir: Sonnet low hattının `claude-limit` raporu
   gelince lider basamağı tek satırla Yusuf'a bildirir ("Basamak 2: Fable 7g
   %86, lider Opus"). Rapor gelmeden başka hat açılmaz.
-- En dolu geçerli pencere bağlayıcıdır. Sıra: plan Max değilse Lider
-  uygulanmaz; ortak 7 günlük pencere duvara ~5 puan kalaysa Basamak 3;
+- En dolu geçerli pencere bağlayıcıdır. Sıra: ortak 7 günlük pencere
+  duvara ~5 puan kalaysa Basamak 3;
   Fable 7 günlük ≥ %85 ya da bilinmiyorsa Basamak 2; aksi halde Basamak 1.
 - Yusuf oturumu bilerek Opus ya da Sonnet ile açtıysa (pencereler daha
   üst basamağa izin verse bile) o modelin basamağı geçerlidir; lider üst
@@ -290,7 +291,7 @@ Seçim kuralları:
   ortak 5 saatlik ve 7 günlük pencereleri paylaşır; Opus bunları Sonnet'ten
   çok daha hızlı harcar.
 - `claude-limit` oturum başında ve büyük dağıtım öncesi Sonnet low hattında
-  çalışır. Hat planı, 5 saatlik, 7 günlük ve Fable 7 günlük pencereleri
+  çalışır. Hat 5 saatlik, 7 günlük ve Fable 7 günlük pencereleri
   birkaç satırla raporlar; bir değer bilinmiyorsa tahmin etmez, bilinmiyor
   der. Rapor gelince basamak seçilir (bkz. Basamak).
 - Brief yazmak ve rapor okumak da liderin modelinden harcar. Lider bağlamı
