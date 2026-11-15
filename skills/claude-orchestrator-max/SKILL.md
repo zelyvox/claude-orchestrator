@@ -1,6 +1,6 @@
 ---
 name: claude-orchestrator-max
-description: "Delegation policy for a Claude Max plan only (not Pro): Fable runs the main loop and owns architecture, specs, briefs, integration and review; Opus 5.5 sub-agents carry the hard, precision lanes and fresh-eyes reviews; Sonnet 5.5 sub-agents gather context and carry simple bounded work; Haiku 5.5 only for very large data cleanup. Fable is never spawned as a sub-agent. Load whenever spawning sub-agents (Agent tool or Workflow agent() calls) or planning any delegation. If the plan is unknown, load this one rather than claude-orchestrator: its first step checks the plan and hands off to claude-orchestrator when not on Max. Does not apply while the lider skill is active: lider is self-contained and replaces it."
+description: "Delegation policy for a Claude Max plan only (not Pro): Fable runs the main loop and owns architecture, specs, briefs, integration and review; Opus 5.5 sub-agents carry the hard, precision lanes and fresh-eyes reviews; Sonnet 5.5 sub-agents gather context and carry simple bounded work; Haiku 5.5 only for very large data cleanup. Fable is never spawned as a sub-agent. Load whenever spawning sub-agents (Agent tool or Workflow agent() calls) or planning any delegation. Does not apply while the lider skill is active: lider is self-contained and replaces it."
 ---
 
 # Orchestration & delegation policy (Max plan, Fable in the main loop)
@@ -16,15 +16,6 @@ integration, synthesis, acceptance. Everything mechanical goes down a tier.
 
 If the `lider` skill is active in this session, stop here and follow it
 instead: Lider is self-contained and this policy does not apply under it.
-
-## Check the plan first
-
-Run the `claude-limit` skill once per session, before the first delegation.
-Its header shows the plan.
-
-- `plan: max` → this policy applies.
-- Anything else (e.g. after switching to a Pro account) → stop using this
-  skill and follow `claude-orchestrator`. Fable is not available there.
 
 ## The pools
 
@@ -185,7 +176,9 @@ or the operator asks for it; this policy is that instruction.
 
 ## Budget
 
-- Run `claude-limit` once per session; re-run it before a large fan-out.
+- Run `claude-limit` once per session, before the first delegation, for
+  the limits; re-run it before a large fan-out. The operator chooses which
+  policy to load; do not use the plan line to switch policies.
 - The 5-hour and 7-day rules in `claude-limit` apply to every model.
 - `Fable 7-day` comes only from the live endpoint. If it is unknown, say so
   to the operator; don't guess.

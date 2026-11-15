@@ -39,8 +39,8 @@ PowerShell: `Copy-Item -Recurse -Force skills/<policy>, skills/claude-limit ~/.c
 (Max: `Copy-Item -Recurse -Force skills/claude-orchestrator-max, skills/lider, skills/claude-limit ~/.claude/skills/`)
 
 If you switch between a Pro and a Max account, install both policies. Each
-description names its plan, and the Max policy checks the plan through
-`claude-limit` and hands over to the Pro one when it is not on Max.
+description names its plan; the operator loads the one that fits the
+account. `claude-limit` is used for the limits only, not to switch policies.
 
 `claude-limit` needs Python 3.11+ (standard library only).
 
